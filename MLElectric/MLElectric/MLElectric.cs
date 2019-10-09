@@ -12,6 +12,7 @@ using MLElectric.POCO;
 using MLElectric.Data;
 using System.Data.SqlClient;
 using System.Data;
+using System.Xml.Serialization;
 
 namespace MLElectric
 {
@@ -82,7 +83,7 @@ namespace MLElectric
 
         private static void TestSinglePrediction(MLContext mlContext, ITransformer loadedModel, List<Period> foreCast)
         {
-
+            var predictionList = new List<PredictionResult>();
             var predictionFunction = mlContext.Model.CreatePredictionEngine<EnergyUsage, EnergyUsagePrediction>(loadedModel);
 
           
@@ -103,8 +104,16 @@ namespace MLElectric
                 Console.WriteLine($"**********************************************************************");
                 Console.WriteLine($"Predicted kWH: {prediction.kWH:0.####}, actual temp: {test.AvgTemp}, Hour: {test.Hour}");
                 Console.WriteLine($"**********************************************************************");
+                var pr = new PredictionResult()
+                {
+                    kWH_Usage = prediction.kWH,
+                    Hour = test.Hour
+
+                };
+                predictionList.Add(pr);
             }
-           
+
+            GenerateXML(predictionList);
 
 
             Console.WriteLine();
@@ -221,6 +230,20 @@ namespace MLElectric
                          };
 
             return merged.AsEnumerable();               
+        }
+
+        static void GenerateXML(List<PredictionResult> list)
+        {
+            //create the serialiser to create the xml
+            XmlSerializer serialiser = new XmlSerializer(typeof(List<PredictionResult>));
+
+            // Create the TextWriter for the serialiser to use
+            TextWriter filestream = new StreamWriter(@"C:\temp\output.xml");
+
+            //write to the file
+            serialiser.Serialize(filestream, list);
+            // Close the file
+            filestream.Close();
         }
     } 
 

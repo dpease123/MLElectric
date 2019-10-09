@@ -143,6 +143,7 @@
     <Compile Include="POCO\Forecast.cs" />
     <Compile Include="POCO\ForecastURLs.cs" />
     <Compile Include="POCO\Period.cs" />
+    <Compile Include="POCO\PredictionResult.cs" />
     <Compile Include="POCO\Properties.cs" />
     <Compile Include="POCO\Weather.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
