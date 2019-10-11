@@ -3,6 +3,8 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using System.Net.Http;
+
 
 namespace EnergyUsageMachinex.Services
 {
@@ -13,12 +15,13 @@ namespace EnergyUsageMachinex.Services
 
             Forecast Forecast = new Forecast();
             Weather weather = new Weather();
-            var client = new HttpClient();
+            System.Net.Http.HttpClient client = new System.Net.Http.HttpClient();
             try
             {
+
                 client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "Taubman/1.0");
-                var centerWeatherDetails = await client.GetStringAsync(path);
-                Forecast = JsonConvert.DeserializeObject<Forecast>(centerWeatherDetails);
+                var centerWeatherDetails = await client.GetAsync(path);
+                Forecast = JsonConvert.DeserializeObject<Forecast>(await centerWeatherDetails.Content.ReadAsStringAsync());
 
                 var WeatherJson = await client.GetStringAsync(Forecast.ForecastURLs.forecastHourly);
                 weather = JsonConvert.DeserializeObject<Weather>(WeatherJson);
@@ -29,7 +32,7 @@ namespace EnergyUsageMachinex.Services
             }
             catch (Exception ex)
             {
-                //Console.WriteLine(ex.Message);
+                Console.WriteLine(ex.Message);
             }
             return Forecast;
         }
