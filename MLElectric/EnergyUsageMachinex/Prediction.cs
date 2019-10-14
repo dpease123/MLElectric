@@ -9,22 +9,22 @@ using EnergyUsageMachinex;
 
 namespace EnergyUsageMachine
 {
-    public class Predict
+    public class Prediction
     {
 
         private readonly MLContext _MLContext;
         private readonly ITransformer _model;
         private readonly List<Period> _forecast;
 
-        public Predict(MLContext mlContext, ITransformer model, List<Period> foreCast)
+        public Prediction(MLContext mlContext, ITransformer model, List<Period> foreCast)
         {
             _model = model;
             _MLContext = mlContext;
             _forecast = foreCast;
         }
-        public void TestSinglePrediction()
+        public List<PredictionResult> Predict()
         {
-            var predictionList = new List<PredictionResult>();
+            var PredictionResultList = new List<PredictionResult>();
             var predictionFunction = _MLContext.Model.CreatePredictionEngine<EnergyUsage, EnergyUsagePrediction>(_model);
 
 
@@ -51,11 +51,10 @@ namespace EnergyUsageMachine
                     Hour = test.Hour
 
                 };
-                predictionList.Add(pr);
+                PredictionResultList.Add(pr);
             }
 
-            var xml = new XMLHandler();
-            xml.GenerateXML(predictionList);
+            return PredictionResultList;
         }
     }
 }
