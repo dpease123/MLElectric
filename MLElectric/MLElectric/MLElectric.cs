@@ -15,7 +15,7 @@ namespace MLElectric
     class Program
     {
 
-        static string modelSavePath = Path.Combine(Environment.CurrentDirectory, "Data", "Model.zip");
+        static string modelSavePath = Path.Combine(@"C:\Temp\ML", "Model.zip");
         static readonly WeatherService ws = new WeatherService();
         static readonly HyperHistorianRepository _repo = new HyperHistorianRepository();
         static readonly IEnumerable<EnergyUsage> modelData = new List<EnergyUsage>();
@@ -23,25 +23,29 @@ namespace MLElectric
 
         static void Main(string[] args)
         {
-            var input = "BEV";
+            var input = "CCK";
             var center = CenterEnum.Find(input);
             var startDate = "01/01/2018";
             var endDate = "01/01/2020";
             modelSavePath = modelSavePath.Replace("Model", "Model_" + input);
             try
             {
+                Console.WriteLine($"Running predictions for: {center._centerAbbr}");
                 var mlContext = new MLContext();
                 var foreCast = Task.Run(async () => await ws.Get24HrForecast(center._weatherURL)).Result;
                 ITransformer trainedModel;
                 if(!File.Exists(modelSavePath))
                     Train(input, center, startDate, endDate, out mlContext, out trainedModel);
+                else
+                    Console.WriteLine("Skip training..already have a trained model");
 
 
                 //Console.WriteLine($"*****STARTING EVALUATE");
                 //var ev = new Evaluate(MLContext, trainedModel, modelData);
-                Console.WriteLine($"*****STARTING PREDICT: " + center._centerAbbr);
+                Console.WriteLine($"Predicting 24hr usage for:  {center._centerAbbr}");
                 trainedModel = Predict(mlContext, foreCast, center);
-                Console.WriteLine($"*****DONE******");
+                Console.WriteLine("Generated predcitions in XML.");
+                Console.WriteLine("Done");
                 Console.Read();
             }
             catch (Exception ex)
@@ -59,7 +63,7 @@ namespace MLElectric
            
             var modelData = _repo.GetTrainingData(center, startDate, endDate);
 
-            Console.WriteLine($"STARTING TRAINING: " + center._centerAbbr);
+            Console.WriteLine($"Training model for: {center._centerAbbr}");
 
             var MLModel = new MLModel(mlContext, modelData, modelSavePath);
             trainedModel = MLModel.Train();

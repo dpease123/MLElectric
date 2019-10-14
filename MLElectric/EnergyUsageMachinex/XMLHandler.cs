@@ -16,7 +16,7 @@ namespace EnergyUsageMachine
         {
             XmlSerializer serialiser = new XmlSerializer(typeof(List<PredictionResult>));
 
-            TextWriter filestream = new StreamWriter(@"C:\temp\output.xml".Replace("output","output" + c._centerAbbr));
+            TextWriter filestream = new StreamWriter(@"C:\temp\ML\output.xml".Replace("output","output_" + c._centerAbbr));
 
             serialiser.Serialize(filestream, results);
 
