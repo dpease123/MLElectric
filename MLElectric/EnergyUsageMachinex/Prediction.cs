@@ -5,7 +5,7 @@ using Microsoft.ML;
 using Newtonsoft.Json;
 using EnergyUsageMachine.POCO;
 using EnergyUsageMachine.Data;
-using EnergyUsageMachinex;
+using EnergyUsageMachine;
 
 namespace EnergyUsageMachine
 {

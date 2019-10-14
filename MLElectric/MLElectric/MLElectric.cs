@@ -8,6 +8,8 @@ using EnergyUsageMachine.POCO;
 using EnergyUsageMachine.Services;
 using EnergyUsageMachine;
 using EnergyUsageMachine.Data;
+using System.Configuration;
+using EnergyUsageMachine.Enums;
 
 namespace MLElectric
 {
@@ -15,20 +17,23 @@ namespace MLElectric
     {
 
         static readonly string _modelPath = Path.Combine(Environment.CurrentDirectory, "Data", "Model.zip");
-        static readonly string BEV = "https://api.weather.gov/points/34.0735,-118.3777";
-        static readonly WeatherService ws = new WeatherService();
+               static readonly WeatherService ws = new WeatherService();
         static readonly HyperHistorianRepository _repo = new HyperHistorianRepository();
 
-        static IEnumerable<EnergyUsage> modelData = new List<EnergyUsage>();
-        static List<Forecast> next24hourForecast = new List<Forecast>();
+        static readonly IEnumerable<EnergyUsage> modelData = new List<EnergyUsage>();
+        static readonly List<Forecast> next24hourForecast = new List<Forecast>();
 
         static void Main(string[] args)
         {
+            var center = CenterEnum.Find("BEV");
+            var startDate = "01/01/2018";
+            var endDate = "01/01/2020";
+
             try
             {
                 var MLContext = new MLContext();
-                var foreCast = Task.Run(async () => await ws.Get24HrForecast(BEV)).Result;
-                var modelData = _repo.GetTrainingData("BEV");
+                var foreCast = Task.Run(async () => await ws.Get24HrForecast(center._weatherURL)).Result;
+                var modelData = _repo.GetTrainingData(center, startDate, endDate);
 
                 Console.WriteLine($"*****STARTING TRAINING");
 

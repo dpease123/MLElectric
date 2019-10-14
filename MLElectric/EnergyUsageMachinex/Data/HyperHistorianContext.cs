@@ -11,7 +11,7 @@ namespace EnergyUsageMachine.Data
         public HyperHistorianContext()
             : base("name=HyperHistorianContext")
         {
-            this.SetCommandTimeOut(300);
+            this.SetCommandTimeOut(600);
         }
 
         public void SetCommandTimeOut(int Timeout)
