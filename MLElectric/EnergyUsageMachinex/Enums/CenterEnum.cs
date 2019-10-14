@@ -26,7 +26,7 @@ namespace EnergyUsageMachine.Enums
                 new Center("IPL", "International Plaza", "Region 35", "https://api.weather.gov/points/27.9647,-82.521"),
                 new Center("STC", "Stamford", "Region 35", "https://api.weather.gov/points/41.053,-73.5371"),
                 new Center("SUN", "Sunvalley", "Region 35", "https://api.weather.gov/points/37.9679,-122.0612"),
-                new Center("UTC", "University Town CenterEnum", "Region 35", "https://api.weather.gov/points/27.385,-82.453"),
+                new Center("UTC", "University Town Center", "Region 35", "https://api.weather.gov/points/27.385,-82.453"),
                 new Center("WFS", "Westfarms", "Region 35", "https://api.weather.gov/points/41.7233,-72.7637")
             };
 

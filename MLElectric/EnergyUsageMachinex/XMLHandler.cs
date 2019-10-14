@@ -1,4 +1,5 @@
-﻿using EnergyUsageMachine.POCO;
+﻿using EnergyUsageMachine.Enums;
+using EnergyUsageMachine.POCO;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -11,11 +12,11 @@ namespace EnergyUsageMachine
 {
     public static class XMLHandler
     {
-        public static void GenerateXML(List<PredictionResult> results)
+        public static void GenerateXML(List<PredictionResult> results, Center c)
         {
             XmlSerializer serialiser = new XmlSerializer(typeof(List<PredictionResult>));
 
-            TextWriter filestream = new StreamWriter(@"C:\temp\output.xml");
+            TextWriter filestream = new StreamWriter(@"C:\temp\output.xml".Replace("output","output" + c._centerAbbr));
 
             serialiser.Serialize(filestream, results);
 

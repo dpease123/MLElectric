@@ -11,14 +11,16 @@ namespace EnergyUsageMachine
 {
     public class MLModel
     {
-        static readonly string _modelPath = Path.Combine(Environment.CurrentDirectory, "Data", "Model.zip");
+        
         private readonly MLContext _mlContext;
         private readonly IEnumerable<EnergyUsage> _modelData;
+        private readonly string _modelSavePath;
        
-        public MLModel(MLContext mlContext, IEnumerable<EnergyUsage> modelData)
+        public MLModel(MLContext mlContext, IEnumerable<EnergyUsage> modelData, string modelSavePath)
         {
             _mlContext = mlContext;
             _modelData = modelData;
+            _modelSavePath = modelSavePath;
         }
         public ITransformer Train()
         {
@@ -29,9 +31,11 @@ namespace EnergyUsageMachine
                 .Append(_mlContext.Transforms.Categorical.OneHotEncoding(outputColumnName: "HourEncoded", inputColumnName: "Hour"))
                 .Append(_mlContext.Transforms.Categorical.OneHotEncoding(outputColumnName: "AvgTempEncoded", inputColumnName: "AvgTemp"))
                 .Append(_mlContext.Transforms.Concatenate("Features", "CenterEncoded", "DayOfWeekEncoded", "HourEncoded", "AvgTempEncoded"))
-                .Append(_mlContext.Regression.Trainers.Sdca());
+                .Append(_mlContext.Regression.Trainers.FastTree());
 
             var model = pipeline.Fit(dataView);
+            _mlContext.Model.Save(model, dataView.Schema, _modelSavePath);
+
 
             return model;
         }
