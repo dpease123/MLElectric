@@ -1,18 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using Microsoft.ML;
-using System.Net.Http;
-using System.Net;
-using Newtonsoft.Json;
-using MLElectric.POCO;
-using MLElectric.Data;
-using System.Data.SqlClient;
-using System.Data;
-using System.Xml.Serialization;
+using EnergyUsageMachine.POCO;
+using EnergyUsageMachine.Services;
+using EnergyUsageMachine;
+using EnergyUsageMachine.Data;
 
 namespace MLElectric
 {
@@ -21,29 +16,32 @@ namespace MLElectric
 
         static readonly string _modelPath = Path.Combine(Environment.CurrentDirectory, "Data", "Model.zip");
         static readonly string BEV = "https://api.weather.gov/points/34.0735,-118.3777";
-        static List<CenterTemp_History> centerTempData =  new List<CenterTemp_History>();
-        static List<CenterkWhUsage_History> centerEnergyUsageData = new List<CenterkWhUsage_History>();
+        static readonly WeatherService ws = new WeatherService();
+        static readonly HyperHistorianRepository _repo = new HyperHistorianRepository();
+
         static IEnumerable<EnergyUsage> modelData = new List<EnergyUsage>();
         static List<Forecast> next24hourForecast = new List<Forecast>();
+
         static void Main(string[] args)
         {
-            var foreCast = Task.Run(async () => await Get24HourWeatherForecast(BEV)).Result;
-            //next24hourForecast = ; 
-            centerTempData = GetTemperatureData();
-            centerEnergyUsageData = GetEnergyUsageData();
-            modelData = MergeData(centerTempData, centerEnergyUsageData);
+            var MLContext = new MLContext();
+            var foreCast = Task.Run(async () => await ws.Get24HrForecast(BEV)).Result;
+            var modelData = _repo.GetTrainingData("BEV");
+
+
             Console.WriteLine();
             Console.WriteLine($"*****STARTING TRAINING");
-            MLContext mlContext = new MLContext(seed: 0);
-            var model = Train(mlContext);
+           
+            var MLModel = new EnergyUsageMachine.Model();
+            var trainedModel = MLModel.Train(MLContext);
 
             Console.WriteLine();
             Console.WriteLine($"*****STARTING EVALUATE");
-            Evaluate(mlContext, model);
+            var ev = new Evaluate(MLContext, trainedModel, modelData);
 
             Console.WriteLine();
             Console.WriteLine($"*****STARTING PREDICT");
-            TestSinglePrediction(mlContext, model, foreCast.Next24Hours);
+            TestSinglePrediction(MLContext, trainedModel, foreCast.Next24Hours);
 
 
             Console.Read();
@@ -85,6 +83,7 @@ namespace MLElectric
         {
             var predictionList = new List<PredictionResult>();
             var predictionFunction = mlContext.Model.CreatePredictionEngine<EnergyUsage, EnergyUsagePrediction>(loadedModel);
+            var xml = new XMLHandler();
 
           
             Console.WriteLine($"Prediction Date: {foreCast.First().startTime.ToShortDateString()}");
@@ -113,132 +112,12 @@ namespace MLElectric
                 predictionList.Add(pr);
             }
 
-            GenerateXML(predictionList);
+            xml.GenerateXML(predictionList);
 
             Console.ReadLine();
 
         }
 
-        static async Task<Forecast> Get24HourWeatherForecast(string path)
-        {
-
-            Forecast Forecast = new Forecast();
-            Weather weather = new Weather();
-            var client = new HttpClient();
-            try
-            {
-               
-                client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "Taubman/1.0");
-                var centerWeatherDetails = await client.GetStringAsync(path);
-                Forecast = JsonConvert.DeserializeObject<Forecast>(centerWeatherDetails);
-           
-                var WeatherJson = await client.GetStringAsync(Forecast.ForecastURLs.forecastHourly);
-                weather = JsonConvert.DeserializeObject<Weather>(WeatherJson);
-                Forecast.Next24Hours = weather.properties.periods.Take(24).ToList();
-
-                return Forecast;
-                
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-            }
-            return Forecast;
-        }
-
-        static List<CenterTemp_History> GetTemperatureData()
-        {
-            var db = new HyperHistorianContext();
-            var temperatureList = new List<CenterTemp_History>();
-          
-            object[] xparams = {
-            new SqlParameter("@level",3),
-            new SqlParameter("@regionName", "Region 34"),
-            new SqlParameter("@mallName", "Beverly Center"),
-            new SqlParameter("@startTime", "01/01/2019"),
-            new SqlParameter("@endTime", "10/01/2019"),
-            new SqlParameter("@sampleInterval", 1),
-            new SqlParameter("@tagName", "Temperature_F")
-            };
-
-            try
-            {
-
-            temperatureList = db.Database.SqlQuery<CenterTemp_History>(
-            "exec [dbo].[sp_GetAggregatesForTimeRangeForLevel_Dev] @level, @regionName, @mallName, @startTime, @endTime, @sampleInterval, @tagName",
-             xparams).ToList();
-
-            }
-            catch(Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-            }
-
-            return temperatureList;
-            
-        }
-
-        static List<CenterkWhUsage_History> GetEnergyUsageData()
-        {
-            var db = new HyperHistorianContext();
-            var kWHUsageList = new List<CenterkWhUsage_History>();
-            object[] xparams = {
-            new SqlParameter("@level",3),
-            new SqlParameter("@regionName", "Region 34"),
-            new SqlParameter("@mallName", "Beverly Center"),
-            new SqlParameter("@startTime", "01/01/2019"),
-            new SqlParameter("@endTime", "10/01/2019"),
-            new SqlParameter("@sampleInterval", 1),
-            new SqlParameter("@tagName", "=Peak_DEM")
-            };
-
-            try
-            {
-
-                kWHUsageList = db.Database.SqlQuery<CenterkWhUsage_History>(
-                "exec [dbo].[sp_GetAggregatesForTimeRangeForLevel_Dev] @level, @regionName, @mallName, @startTime, @endTime, @sampleInterval, @tagName",
-                 xparams).ToList();
-
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-            }
-
-
-
-            return kWHUsageList;
-
-        }
-
-        static IEnumerable<EnergyUsage> MergeData(List<CenterTemp_History> tempData, List<CenterkWhUsage_History> energyData)
-        {
-
-            var merged = from temp in tempData
-                         join energy in energyData
-                            on temp.CurrentTimeStamp equals energy.CurrentTimeStamp
-                         select new EnergyUsage
-                         {
-                             Center = temp.Tag,
-                             AvgTemp = Math.Round(temp.CurrentAvgValue, 6, MidpointRounding.ToEven),
-                             kWH = float.Parse(Math.Round(energy.CurrentAvgValue, 6, MidpointRounding.ToEven).ToString()),
-                             DayOfWeek = (int)temp.CurrentTimeStamp.DayOfWeek,
-                             Hour = temp.CurrentTimeStamp.Hour
-                         };
-
-            return merged.AsEnumerable();               
-        }
-
-        static void GenerateXML(List<PredictionResult> list)
-        {
-            XmlSerializer serialiser = new XmlSerializer(typeof(List<PredictionResult>));
-
-            TextWriter filestream = new StreamWriter(@"C:\temp\output.xml");
-
-            serialiser.Serialize(filestream, list);
-           
-            filestream.Close();
-        }
     } 
 
 }

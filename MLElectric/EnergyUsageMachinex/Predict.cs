@@ -11,14 +11,25 @@ namespace EnergyUsageMachine
 {
     public class Predict
     {
-        private static void TestSinglePrediction(MLContext mlContext, ITransformer loadedModel, List<Period> foreCast)
+
+        private readonly MLContext _MLContext;
+        private readonly ITransformer _model;
+        private readonly List<Period> _forecast;
+
+        public Predict(MLContext mlContext, ITransformer model, List<Period> foreCast)
+        {
+            _model = model;
+            _MLContext = mlContext;
+            _forecast = foreCast;
+        }
+        public void TestSinglePrediction()
         {
             var predictionList = new List<PredictionResult>();
-            var predictionFunction = mlContext.Model.CreatePredictionEngine<EnergyUsage, EnergyUsagePrediction>(loadedModel);
+            var predictionFunction = _MLContext.Model.CreatePredictionEngine<EnergyUsage, EnergyUsagePrediction>(_model);
 
 
 
-            foreach (var fc in foreCast)
+            foreach (var fc in _forecast)
             {
                 var test = new EnergyUsage()
                 {

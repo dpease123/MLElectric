@@ -4,6 +4,7 @@ using System.IO;
 using Microsoft.ML;
 using EnergyUsageMachine.POCO;
 using EnergyUsageMachine.Data;
+
 using System;
 
 namespace EnergyUsageMachine
@@ -12,11 +13,9 @@ namespace EnergyUsageMachine
     {
         static readonly string _modelPath = Path.Combine(Environment.CurrentDirectory, "Data", "Model.zip");
         static readonly string BEV = "https://api.weather.gov/points/34.0735,-118.3777";
-        static List<CenterTemp_History> centerTempData = new List<CenterTemp_History>();
-        static List<CenterkWhUsage_History> centerEnergyUsageData = new List<CenterkWhUsage_History>();
         static IEnumerable<EnergyUsage> modelData = new List<EnergyUsage>();
         static List<Forecast> next24hourForecast = new List<Forecast>();
-        public static ITransformer Train(MLContext mlContext)
+        public ITransformer Train(MLContext mlContext)
         {
             IDataView dataView = mlContext.Data.LoadFromEnumerable<EnergyUsage>(modelData);
             var pipeline = mlContext.Transforms.CopyColumns(outputColumnName: "Label", inputColumnName: "kWH")

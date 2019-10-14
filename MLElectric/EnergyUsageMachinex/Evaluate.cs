@@ -9,12 +9,21 @@ namespace EnergyUsageMachine
 {
     public class Evaluate
     {
-        static IEnumerable<EnergyUsage> modelData = new List<EnergyUsage>();
-        private static void EvaluateModel(MLContext mlContext, ITransformer model)
+        private readonly MLContext _MLContext;
+        private readonly ITransformer _model;
+        private readonly IEnumerable<EnergyUsage> _modelData;
+        public Evaluate(MLContext mlContext, ITransformer model, IEnumerable<EnergyUsage> modelData)
         {
-            IDataView dataView = mlContext.Data.LoadFromEnumerable<EnergyUsage>(modelData);
-            var predictions = model.Transform(dataView);
-            var metrics = mlContext.Regression.Evaluate(predictions, "Label", "Score");
+            _model = model;
+            _MLContext = mlContext;
+            _modelData = modelData;
+        }
+
+        public void EvaluateModel()
+        {
+            IDataView dataView = _MLContext.Data.LoadFromEnumerable<EnergyUsage>(_modelData);
+            var predictions = _model.Transform(dataView);
+            var metrics = _MLContext.Regression.Evaluate(predictions, "Label", "Score");
             Console.WriteLine();
             Console.WriteLine($"*************************************************");
             Console.WriteLine($"*       Model quality metrics evaluation         ");

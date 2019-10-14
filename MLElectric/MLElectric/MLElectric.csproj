@@ -135,30 +135,19 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Data\CenterkWh_History.cs" />
-    <Compile Include="Data\CenterTemp_History.cs" />
-    <Compile Include="Data\HyperHistorianContext.cs" />
     <Compile Include="MLElectric.cs" />
-    <Compile Include="MLElectricClasses.cs" />
-    <Compile Include="POCO\Forecast.cs" />
-    <Compile Include="POCO\ForecastURLs.cs" />
-    <Compile Include="POCO\Period.cs" />
-    <Compile Include="POCO\PredictionResult.cs" />
-    <Compile Include="POCO\Properties.cs" />
-    <Compile Include="POCO\Weather.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-    <None Include="Data\GLCUsage_Test.csv">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="Data\GLCUsage_Train.csv">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="..\EnergyUsageMachinex\EnergyUsageMachine.csproj">
+      <Project>{f02165c5-8fa0-4292-ba38-2ba62761fcae}</Project>
+      <Name>EnergyUsageMachine</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>

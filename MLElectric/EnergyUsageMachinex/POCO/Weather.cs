@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace EnergyUsageMachine.POCO
 {
-    class Weather
+    public class Weather
     {
         public Properties properties { get; set; }
     }

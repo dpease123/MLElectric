@@ -3,14 +3,13 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using System.Net.Http;
 
 
-namespace EnergyUsageMachinex.Services
+namespace EnergyUsageMachine.Services
 {
-    class WeatherService
+    public class WeatherService
     {
-        static async Task<Forecast> Get24HourWeatherForecast(string path)
+        public async Task<Forecast> Get24HrForecast(string path)
         {
 
             Forecast Forecast = new Forecast();
@@ -35,6 +34,11 @@ namespace EnergyUsageMachinex.Services
                 Console.WriteLine(ex.Message);
             }
             return Forecast;
+        }
+
+        public async Task<Forecast> Get3DayForecast(string path)
+        {
+            throw new NotImplementedException("No 3 day wetaher wired yet");
         }
     }
 }

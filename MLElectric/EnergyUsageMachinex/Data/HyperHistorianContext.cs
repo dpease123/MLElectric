@@ -1,4 +1,4 @@
-namespace EnergyUsageMachinex.Data
+namespace EnergyUsageMachine.Data
 {
     using System;
     using System.Data.Entity;

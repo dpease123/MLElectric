@@ -112,7 +112,7 @@
     <Compile Include="Data\CenterkWh_History.cs" />
     <Compile Include="Data\CenterTemp_History.cs" />
     <Compile Include="Data\HyperHistorianContext.cs" />
-    <Compile Include="Data\HyperHistorinRepository.cs" />
+    <Compile Include="Data\HyperHistorianRepository.cs" />
     <Compile Include="Evaluate.cs" />
     <Compile Include="Model.cs" />
     <Compile Include="POCO\EnergyUsage.cs" />

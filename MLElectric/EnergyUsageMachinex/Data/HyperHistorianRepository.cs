@@ -7,11 +7,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace EnergyUsageMachinex.Data
+namespace EnergyUsageMachine.Data
 {
-    public class HyperHistorinRepository
+    public class HyperHistorianRepository
     {
-        private List<CenterTemp_History> GetTemperatureData()
+        private List<CenterTemp_History> GetTemperatureData(string CenterAbbr)
         {
             var temperatureList = new List<CenterTemp_History>();
             var db = new HyperHistorianContext();
@@ -44,7 +44,7 @@ namespace EnergyUsageMachinex.Data
 
         }
 
-        private List<CenterkWhUsage_History> GetEnergyUsageData()
+        private List<CenterkWhUsage_History> GetEnergyUsageData(string CenterAbbr)
         {
             var kWHUsageList = new List<CenterkWhUsage_History>();
             var db = new HyperHistorianContext();
@@ -78,10 +78,10 @@ namespace EnergyUsageMachinex.Data
 
         }
 
-        public IEnumerable<EnergyUsage> GetTrainingData()
+        public IEnumerable<EnergyUsage> GetTrainingData(string CenterAbbr)
         {
-            var tempData = GetTemperatureData();
-            var energyData = GetEnergyUsageData();
+            var tempData = GetTemperatureData(CenterAbbr);
+            var energyData = GetEnergyUsageData(CenterAbbr);
 
             var merged = from temp in tempData
                          join energy in energyData
