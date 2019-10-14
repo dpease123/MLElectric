@@ -11,14 +11,13 @@ namespace EnergyUsageMachine
 {
     public static class XMLHandler
     {
-        private static readonly List<PredictionResult> _results;
         public static void GenerateXML(List<PredictionResult> results)
         {
             XmlSerializer serialiser = new XmlSerializer(typeof(List<PredictionResult>));
 
             TextWriter filestream = new StreamWriter(@"C:\temp\output.xml");
 
-            serialiser.Serialize(filestream, _results);
+            serialiser.Serialize(filestream, results);
 
             filestream.Close();
         }

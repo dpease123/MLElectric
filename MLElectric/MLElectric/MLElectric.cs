@@ -24,29 +24,32 @@ namespace MLElectric
 
         static void Main(string[] args)
         {
-            var MLContext = new MLContext();
-            var foreCast = Task.Run(async () => await ws.Get24HrForecast(BEV)).Result;
-            var modelData = _repo.GetTrainingData("BEV");
+            try
+            {
+                var MLContext = new MLContext();
+                var foreCast = Task.Run(async () => await ws.Get24HrForecast(BEV)).Result;
+                var modelData = _repo.GetTrainingData("BEV");
 
+                Console.WriteLine($"*****STARTING TRAINING");
 
-            Console.WriteLine();
-            Console.WriteLine($"*****STARTING TRAINING");
+                var MLModel = new MLModel(MLContext, modelData);
+                var trainedModel = MLModel.Train();
 
-            var MLModel = new EnergyUsageMachine.Model();
-            var trainedModel = MLModel.Train(MLContext);
+                //Console.WriteLine($"*****STARTING EVALUATE");
+                //var ev = new Evaluate(MLContext, trainedModel, modelData);
 
-            Console.WriteLine();
-            Console.WriteLine($"*****STARTING EVALUATE");
-            var ev = new Evaluate(MLContext, trainedModel, modelData);
+                Console.WriteLine($"*****STARTING PREDICT");
+                var prediction = new Prediction(MLContext, trainedModel, foreCast.Next24Hours);
+                var predictions = prediction.Predict();
 
-            Console.WriteLine();
-            Console.WriteLine($"*****STARTING PREDICT");
-            var prediction = new Prediction(MLContext, trainedModel, foreCast.Next24Hours);
-            var predictions = prediction.Predict();
-
-
-            XMLHandler.GenerateXML(predictions);
-            Console.Read();
+                XMLHandler.GenerateXML(predictions);
+                Console.Read();
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+            Console.ReadLine();
 
         }
     }

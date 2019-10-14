@@ -114,7 +114,7 @@
     <Compile Include="Data\HyperHistorianContext.cs" />
     <Compile Include="Data\HyperHistorianRepository.cs" />
     <Compile Include="Evaluate.cs" />
-    <Compile Include="Model.cs" />
+    <Compile Include="MLModel.cs" />
     <Compile Include="POCO\EnergyUsage.cs" />
     <Compile Include="POCO\Forecast.cs" />
     <Compile Include="POCO\ForecastURLs.cs" />
