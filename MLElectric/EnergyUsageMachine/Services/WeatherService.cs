@@ -9,13 +9,14 @@ namespace EnergyUsageMachine.Services
 {
     public class WeatherService
     {
+        System.Net.Http.HttpClient client = new System.Net.Http.HttpClient();
+       
         public async Task<Forecast> Get24HrForecast(MLSetting mls)
         {
 
             Forecast Forecast = new Forecast();
-          
             Weather weather = new Weather();
-            System.Net.Http.HttpClient client = new System.Net.Http.HttpClient();
+          
             try
             {
 
@@ -23,9 +24,9 @@ namespace EnergyUsageMachine.Services
                 var centerWeatherDetails = await client.GetAsync(mls.WeatherURL);
                 Forecast = JsonConvert.DeserializeObject<Forecast>(await centerWeatherDetails.Content.ReadAsStringAsync());
 
-                var WeatherJson = await client.GetStringAsync(Forecast.ForecastURLs.forecastHourly);
+                var WeatherJson = await client.GetStringAsync(Forecast.ForecastURLs.Hourly);
                 weather = JsonConvert.DeserializeObject<Weather>(WeatherJson);
-                Forecast.Next24Hours = weather.properties.periods.Take(24).ToList();
+                Forecast.Periods = weather.properties.periods.Take(24).ToList();
 
                 Forecast.CenterName = mls.CenterName;
                 Forecast.URL = mls.WeatherURL;
@@ -39,9 +40,31 @@ namespace EnergyUsageMachine.Services
             return Forecast;
         }
 
-        public async Task<Forecast> Get3DayForecast(string path)
+        public async Task<Forecast> Get3DayForecast(MLSetting mls)
         {
-            throw new NotImplementedException("No 3 day wetaher wired yet");
+            Forecast Forecast = new Forecast();
+            Weather weather = new Weather();
+            try
+            {
+
+                client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "Taubman/1.1");
+                var centerWeatherDetails = await client.GetAsync(mls.WeatherURL);
+                Forecast = JsonConvert.DeserializeObject<Forecast>(await centerWeatherDetails.Content.ReadAsStringAsync());
+
+                var WeatherJson = await client.GetStringAsync(Forecast.ForecastURLs.ThreeDay);
+                weather = JsonConvert.DeserializeObject<Weather>(WeatherJson);
+                Forecast.Periods = weather.properties.periods.Take(24).ToList();
+
+                Forecast.CenterName = mls.CenterName;
+                Forecast.URL = mls.WeatherURL;
+                return Forecast;
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+            return Forecast;
         }
     }
 }

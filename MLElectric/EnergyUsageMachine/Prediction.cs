@@ -11,25 +11,24 @@ namespace EnergyUsageMachine
 {
     public class Prediction
     {
+        private readonly ITransformer _trainedModel;
+        private readonly Forecast _forecast;
 
-        private readonly MLContext _MLContext;
-        private readonly ITransformer _model;
-        private readonly List<Period> _forecast;
-
-        public Prediction(MLContext mlContext, ITransformer model, List<Period> foreCast)
+        public Prediction(ITransformer trainedModel, Forecast forecast)
         {
-            _model = model;
-            _MLContext = mlContext;
-            _forecast = foreCast;
+            _trainedModel = trainedModel;
+            _forecast = forecast;
         }
+
         public List<PredictionResult> Predict()
         {
+            var _MLContext = new MLContext();
             var PredictionResultList = new List<PredictionResult>();
-            var predictionFunction = _MLContext.Model.CreatePredictionEngine<EnergyUsage, EnergyUsagePrediction>(_model);
+            var predictionFunction = _MLContext.Model.CreatePredictionEngine<EnergyUsage, EnergyUsagePrediction>(_trainedModel);
 
 
 
-            foreach (var fc in _forecast)
+            foreach (var fc in _forecast.Periods)
             {
                 var test = new EnergyUsage()
                 {
@@ -42,9 +41,6 @@ namespace EnergyUsageMachine
                 };
 
                 var prediction = predictionFunction.Predict(test);
-
-                //Console.WriteLine($"Predicted kWH: {prediction.kWH:0.####}, actual temp: {test.AvgTemp}, Hour: {test.Hour}");
-
                 var pr = new PredictionResult()
                 {
                     kWH_Usage = prediction.kWH,

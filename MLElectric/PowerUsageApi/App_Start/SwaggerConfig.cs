@@ -2,6 +2,8 @@ using System.Web.Http;
 using WebActivatorEx;
 using PowerUsageApi;
 using Swashbuckle.Application;
+using PowerUsageApi.SwaggerFilters;
+
 
 [assembly: PreApplicationStartMethod(typeof(SwaggerConfig), "Register")]
 
@@ -16,6 +18,8 @@ namespace PowerUsageApi
             GlobalConfiguration.Configuration
                 .EnableSwagger(c =>
                     {
+                        c.OperationFilter<ApplySwaggerImplementationNotesFilterAttributes>();
+
                         // By default, the service root url is inferred from the request used to access the docs.
                         // However, there may be situations (e.g. proxy and load-balanced environments) where this does not
                         // resolve correctly. You can workaround this by providing your own code to determine the root URL.
@@ -179,6 +183,7 @@ namespace PowerUsageApi
                     })
                 .EnableSwaggerUi(c =>
                     {
+
                         // Use the "DocumentTitle" option to change the Document title.
                         // Very helpful when you have multiple Swagger pages open, to tell them apart.
                         //
@@ -249,6 +254,7 @@ namespace PowerUsageApi
                         // "apiKeyIn" can either be "query" or "header"
                         //
                         c.EnableApiKeySupport("Api-Key", "header");
+
                     });
         }
     }

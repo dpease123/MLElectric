@@ -12,7 +12,7 @@ namespace EnergyUsageMachine.POCO
         [JsonProperty("properties")]
         public ForecastURLs ForecastURLs { get; set; }
 
-        public List<Period> Next24Hours { get; set; }
+        public List<Period> Periods { get; set; }
 
         public string CenterName { get; set; }
         public string URL { get; set; }

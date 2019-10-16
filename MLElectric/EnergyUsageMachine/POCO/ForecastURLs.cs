@@ -9,7 +9,10 @@ namespace EnergyUsageMachine.POCO
 {
     public class ForecastURLs
     {
-        public string forecast { get; set; }
-        public string forecastHourly { get; set; }
+        [JsonProperty(PropertyName = "forecast")]
+        public string ThreeDay { get; set; }
+        [JsonProperty(PropertyName = "forecastHourly")]
+        public string Hourly { get; set; }
+
     }
 }

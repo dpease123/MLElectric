@@ -12,29 +12,28 @@ namespace EnergyUsageMachine
     public class MLModel
     {
         
-        private readonly MLContext _mlContext;
         private readonly IEnumerable<EnergyUsage> _modelData;
         private readonly string _modelSavePath;
        
-        public MLModel(MLContext mlContext, IEnumerable<EnergyUsage> modelData, string modelSavePath)
+        public MLModel(IEnumerable<EnergyUsage> modelData, string modelSavePath)
         {
-            _mlContext = mlContext;
             _modelData = modelData;
             _modelSavePath = modelSavePath;
         }
         public ITransformer Train()
         {
-            IDataView dataView = _mlContext.Data.LoadFromEnumerable<EnergyUsage>(_modelData);
-            var pipeline = _mlContext.Transforms.CopyColumns(outputColumnName: "Label", inputColumnName: "kWH")
-                .Append(_mlContext.Transforms.Categorical.OneHotEncoding(outputColumnName: "CenterEncoded", inputColumnName: "Center"))
-                .Append(_mlContext.Transforms.Categorical.OneHotEncoding(outputColumnName: "DayOfWeekEncoded", inputColumnName: "DayOfWeek"))
-                .Append(_mlContext.Transforms.Categorical.OneHotEncoding(outputColumnName: "HourEncoded", inputColumnName: "Hour"))
-                .Append(_mlContext.Transforms.Categorical.OneHotEncoding(outputColumnName: "AvgTempEncoded", inputColumnName: "AvgTemp"))
-                .Append(_mlContext.Transforms.Concatenate("Features", "CenterEncoded", "DayOfWeekEncoded", "HourEncoded", "AvgTempEncoded"))
-                .Append(_mlContext.Regression.Trainers.FastTree());
+            var mlContext = new MLContext();
+            IDataView dataView = mlContext.Data.LoadFromEnumerable<EnergyUsage>(_modelData);
+            var pipeline = mlContext.Transforms.CopyColumns(outputColumnName: "Label", inputColumnName: "kWH")
+                .Append(mlContext.Transforms.Categorical.OneHotEncoding(outputColumnName: "CenterEncoded", inputColumnName: "Center"))
+                .Append(mlContext.Transforms.Categorical.OneHotEncoding(outputColumnName: "DayOfWeekEncoded", inputColumnName: "DayOfWeek"))
+                .Append(mlContext.Transforms.Categorical.OneHotEncoding(outputColumnName: "HourEncoded", inputColumnName: "Hour"))
+                .Append(mlContext.Transforms.Categorical.OneHotEncoding(outputColumnName: "AvgTempEncoded", inputColumnName: "AvgTemp"))
+                .Append(mlContext.Transforms.Concatenate("Features", "CenterEncoded", "DayOfWeekEncoded", "HourEncoded", "AvgTempEncoded"))
+                .Append(mlContext.Regression.Trainers.FastTree());
 
             var model = pipeline.Fit(dataView);
-            _mlContext.Model.Save(model, dataView.Schema, _modelSavePath);
+            mlContext.Model.Save(model, dataView.Schema, _modelSavePath);
 
 
             return model;

@@ -1,5 +1,6 @@
 ﻿using EnergyUsageMachine.Data;
 using EnergyUsageMachine.Models;
+using EnergyUsageMachine.POCO;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,6 +16,11 @@ namespace EnergyUsageMachine.Services
         public MLSetting GetSetting(string Id)
         {
             return hhr.GetMLSetting(Id);
+        }
+
+        public IEnumerable<EnergyUsage> GetTrainingData(MLSetting center, string startDate, string endDate)
+        {
+            return hhr.GetTrainingData(center, startDate, endDate).ToList();
         }
     }
 }
