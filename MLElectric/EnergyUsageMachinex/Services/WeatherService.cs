@@ -3,13 +3,13 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-
+using EnergyUsageMachine.Models;
 
 namespace EnergyUsageMachine.Services
 {
     public class WeatherService
     {
-        public async Task<Forecast> Get24HrForecast(string path)
+        public async Task<Forecast> Get24HrForecast(MLSetting mls)
         {
 
             Forecast Forecast = new Forecast();
@@ -19,7 +19,7 @@ namespace EnergyUsageMachine.Services
             {
 
                 client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "Taubman/1.0");
-                var centerWeatherDetails = await client.GetAsync(path);
+                var centerWeatherDetails = await client.GetAsync(mls.WeatherURL);
                 Forecast = JsonConvert.DeserializeObject<Forecast>(await centerWeatherDetails.Content.ReadAsStringAsync());
 
                 var WeatherJson = await client.GetStringAsync(Forecast.ForecastURLs.forecastHourly);

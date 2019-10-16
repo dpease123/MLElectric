@@ -1,6 +1,6 @@
 ﻿using EnergyUsageMachine.Data;
-using EnergyUsageMachine.Enums;
 using EnergyUsageMachine.POCO;
+using EnergyUsageMachine.Models;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -13,27 +13,27 @@ namespace EnergyUsageMachine.Data
     public class HyperHistorianRepository
     {
         HyperHistorianContext ctx = new HyperHistorianContext();
-        private List<CenterTemp_History> GetTemperatureData(Center c, string startDate, string endDate)
+        private List<CenterTemp_History> GetTemperatureData(MLSetting c, string startDate, string endDate)
         {
 
             object[] xparams = {
-            new SqlParameter("@regionName", c._region),
-            new SqlParameter("@mallName",c._name),
+            new SqlParameter("@regionName", c.Region),
+            new SqlParameter("@mallName",c.CenterName),
             new SqlParameter("@startTime", startDate),
             new SqlParameter("@endTime", endDate),
             new SqlParameter("@tagName", "Temperature_F")
             };
 
-         return ctx.Database.SqlQuery<CenterTemp_History>(
-                "exec [dbo].[sp_GetAggregatesForTimeRangeForLevel_Dev] @regionName, @mallName, @startTime, @endTime, @tagName",
-                 xparams).ToList();
+            return ctx.Database.SqlQuery<CenterTemp_History>(
+                   "exec [dbo].[sp_GetAggregatesForTimeRangeForLevel_Dev] @regionName, @mallName, @startTime, @endTime, @tagName",
+                    xparams).ToList();
         }
 
-        private List<CenterkWhUsage_History> GetEnergyUsageData(Center c, string startDate, string endDate)
+        private List<CenterkWhUsage_History> GetEnergyUsageData(MLSetting c, string startDate, string endDate)
         {
             object[] xparams = {
-            new SqlParameter("@regionName", c._region),
-            new SqlParameter("@mallName",c._name),
+            new SqlParameter("@regionName", c.Region),
+            new SqlParameter("@mallName",c.CenterName),
             new SqlParameter("@startTime", startDate),
             new SqlParameter("@endTime", endDate),
             new SqlParameter("@tagName", "=Peak_DEM")
@@ -45,7 +45,7 @@ namespace EnergyUsageMachine.Data
 
         }
 
-        public IEnumerable<EnergyUsage> GetTrainingData(Center center, string startDate, string endDate)
+        public IEnumerable<EnergyUsage> GetTrainingData(MLSetting center, string startDate, string endDate)
         {
             var tempData = GetTemperatureData(center, startDate, endDate);
             var energyData = GetEnergyUsageData(center, startDate, endDate);
@@ -63,6 +63,16 @@ namespace EnergyUsageMachine.Data
                          };
 
             return merged.AsEnumerable();
+        }
+
+        public MLSetting GetMLSetting(string Id)
+        {
+            return ctx.MLSettings.Find(Id);
+        }
+
+        public List<MLSetting> GetAllMLSettings()
+        {
+            return ctx.MLSettings.ToList();
         }
     }
 }

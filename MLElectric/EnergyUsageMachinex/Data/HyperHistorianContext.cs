@@ -5,9 +5,13 @@ namespace EnergyUsageMachine.Data
     using System.ComponentModel.DataAnnotations.Schema;
     using System.Linq;
     using System.Data.Entity.Infrastructure;
+    using EnergyUsageMachine.Models;
 
     public partial class HyperHistorianContext : DbContext
     {
+
+        public DbSet<MLSetting> MLSettings { get; set; }
+
         public HyperHistorianContext()
             : base("name=HyperHistorianContext")
         {
