@@ -171,7 +171,6 @@
     <Compile Include="Areas\HelpPage\SampleGeneration\TextSample.cs" />
     <Compile Include="Areas\HelpPage\XmlDocumentationProvider.cs" />
     <Compile Include="Controllers\HomeController.cs" />
-    <Compile Include="Controllers\ValuesController.cs" />
     <Compile Include="Controllers\WeatherController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
@@ -263,7 +262,7 @@
     <Content Include="Scripts\jquery-3.3.1.min.map" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\EnergyUsageMachinex\EnergyUsageMachine.csproj">
+    <ProjectReference Include="..\EnergyUsageMachine\EnergyUsageMachine.csproj">
       <Project>{f02165c5-8fa0-4292-ba38-2ba62761fcae}</Project>
       <Name>EnergyUsageMachine</Name>
     </ProjectReference>

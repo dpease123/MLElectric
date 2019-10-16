@@ -13,12 +13,13 @@ namespace EnergyUsageMachine.Services
         {
 
             Forecast Forecast = new Forecast();
+          
             Weather weather = new Weather();
             System.Net.Http.HttpClient client = new System.Net.Http.HttpClient();
             try
             {
 
-                client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "Taubman/1.0");
+                client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "Taubman/1.1");
                 var centerWeatherDetails = await client.GetAsync(mls.WeatherURL);
                 Forecast = JsonConvert.DeserializeObject<Forecast>(await centerWeatherDetails.Content.ReadAsStringAsync());
 
@@ -26,6 +27,8 @@ namespace EnergyUsageMachine.Services
                 weather = JsonConvert.DeserializeObject<Weather>(WeatherJson);
                 Forecast.Next24Hours = weather.properties.periods.Take(24).ToList();
 
+                Forecast.CenterName = mls.CenterName;
+                Forecast.URL = mls.WeatherURL;
                 return Forecast;
 
             }

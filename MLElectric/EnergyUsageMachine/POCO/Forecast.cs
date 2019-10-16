@@ -13,5 +13,8 @@ namespace EnergyUsageMachine.POCO
         public ForecastURLs ForecastURLs { get; set; }
 
         public List<Period> Next24Hours { get; set; }
+
+        public string CenterName { get; set; }
+        public string URL { get; set; }
     }
 }

@@ -144,7 +144,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\EnergyUsageMachinex\EnergyUsageMachine.csproj">
+    <ProjectReference Include="..\EnergyUsageMachine\EnergyUsageMachine.csproj">
       <Project>{f02165c5-8fa0-4292-ba38-2ba62761fcae}</Project>
       <Name>EnergyUsageMachine</Name>
     </ProjectReference>
