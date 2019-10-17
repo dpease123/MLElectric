@@ -31,7 +31,7 @@ namespace EnergyUsageMachine
                 .Append(mlContext.Transforms.Categorical.OneHotEncoding(outputColumnName: "HourEncoded", inputColumnName: "Hour"))
                 .Append(mlContext.Transforms.Categorical.OneHotEncoding(outputColumnName: "AvgTempEncoded", inputColumnName: "AvgTemp"))
                 .Append(mlContext.Transforms.Concatenate("Features", "CenterEncoded", "DayOfWeekEncoded", "HourEncoded", "AvgTempEncoded"))
-                .Append(mlContext.Regression.Trainers.Sdca());
+                .Append(mlContext.Regression.Trainers.FastTree());
 
             var model = pipeline.Fit(dataView);
             mlContext.Model.Save(model, dataView.Schema, _modelSavePath);
