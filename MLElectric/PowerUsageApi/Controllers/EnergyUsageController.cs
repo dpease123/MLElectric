@@ -100,7 +100,7 @@ namespace PowerUsageApi.Controllers
 
         private static string GetPath(EnergyUsageMachine.Models.MLSetting center)
         {
-            return Path.Combine(WebConfigurationManager.AppSettings["MLModelPath"], center.CenterAbbr + "_" + "Model.zip");
+            return Path.Combine(WebConfigurationManager.AppSettings["MLModelPath"], "Model_" + center.CenterAbbr.ToUpper() + ".zip");
         }
     }
 }

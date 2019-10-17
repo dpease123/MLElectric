@@ -13,7 +13,7 @@ namespace EnergyUsageMachine
 {
     public static class XMLHandler
     {
-        public static void GenerateXML(List<PredictionResult> results, MLSetting c)
+        public static void GenerateXMLFile(List<PredictionResult> results, MLSetting c)
         {
             XmlSerializer serialiser = new XmlSerializer(typeof(List<PredictionResult>));
 
@@ -28,8 +28,10 @@ namespace EnergyUsageMachine
         {
             XmlSerializer xsSubmit = new XmlSerializer(typeof(T));
             string xml = "";
-            XmlWriterSettings settings = new XmlWriterSettings();
-            settings.OmitXmlDeclaration = false;
+            XmlWriterSettings settings = new XmlWriterSettings
+            {
+                OmitXmlDeclaration = false
+            };
 
             using (var sww = new StringWriter())
             {
