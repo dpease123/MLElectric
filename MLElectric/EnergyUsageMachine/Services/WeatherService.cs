@@ -4,32 +4,32 @@ using System.Linq;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using EnergyUsageMachine.Models;
+using System.Collections.Generic;
 
 namespace EnergyUsageMachine.Services
 {
     public class WeatherService
     {
         System.Net.Http.HttpClient client = new System.Net.Http.HttpClient();
-       
+
         public async Task<Forecast> Get24HrForecast(MLSetting mls)
         {
 
-            Forecast Forecast = new Forecast();
-            Weather weather = new Weather();
+            var Forecast = new Forecast
+            {
+                CenterName = mls.CenterName,
+                URL = mls.WeatherURL,
+            };
           
             try
             {
+                Forecast = await GetForecastURLs(mls, Forecast);
 
-                client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "Taubman/1.1");
-                var centerWeatherDetails = await client.GetAsync(mls.WeatherURL);
-                Forecast = JsonConvert.DeserializeObject<Forecast>(await centerWeatherDetails.Content.ReadAsStringAsync());
-
-                var WeatherJson = await client.GetStringAsync(Forecast.ForecastURLs.Hourly);
-                weather = JsonConvert.DeserializeObject<Weather>(WeatherJson);
-                Forecast.Periods = weather.properties.periods.Take(24).ToList();
+                var periods = await GetWeather(Forecast.ForecastURLs.Hourly, 24);
 
                 Forecast.CenterName = mls.CenterName;
                 Forecast.URL = mls.WeatherURL;
+                Forecast.Periods = periods.ToList();
                 return Forecast;
 
             }
@@ -40,23 +40,29 @@ namespace EnergyUsageMachine.Services
             return Forecast;
         }
 
+        private async Task<Forecast> GetForecastURLs(MLSetting mls, Forecast Forecast)
+        {
+            client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "Taubman/1.1");
+            var centerWeatherDetails = await client.GetAsync(mls.WeatherURL);
+            Forecast = JsonConvert.DeserializeObject<Forecast>(await centerWeatherDetails.Content.ReadAsStringAsync());
+            return Forecast;
+        }
+
         public async Task<Forecast> Get3DayForecast(MLSetting mls)
         {
-            Forecast Forecast = new Forecast();
-            Weather weather = new Weather();
+
+            var Forecast = new Forecast
+            {
+                CenterName = mls.CenterName,
+                URL = mls.WeatherURL,
+            };
             try
             {
+                Forecast = await GetForecastURLs(mls, Forecast);
 
-                client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "Taubman/1.1");
-                var centerWeatherDetails = await client.GetAsync(mls.WeatherURL);
-                Forecast = JsonConvert.DeserializeObject<Forecast>(await centerWeatherDetails.Content.ReadAsStringAsync());
+                Forecast.Periods = await GetWeather(Forecast.ForecastURLs.ThreeDay, 6);
 
-                var WeatherJson = await client.GetStringAsync(Forecast.ForecastURLs.ThreeDay);
-                weather = JsonConvert.DeserializeObject<Weather>(WeatherJson);
-                Forecast.Periods = weather.properties.periods.Take(24).ToList();
-
-                Forecast.CenterName = mls.CenterName;
-                Forecast.URL = mls.WeatherURL;
+                Forecast.Periods.Take(24);
                 return Forecast;
 
             }
@@ -65,6 +71,25 @@ namespace EnergyUsageMachine.Services
                 Console.WriteLine(ex.Message);
             }
             return Forecast;
+        }
+
+        private async Task<List<Period>> GetWeather(string URL, int rows)
+        {
+            Forecast Forecast = new Forecast();
+            try
+            {
+                var WeatherJson = await client.GetStringAsync(URL);
+                var w = JsonConvert.DeserializeObject<Weather>(WeatherJson);
+                var periods = w.properties.periods.Take(rows);
+               
+                return periods.ToList();
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+            return new List<Period>();
         }
     }
 }

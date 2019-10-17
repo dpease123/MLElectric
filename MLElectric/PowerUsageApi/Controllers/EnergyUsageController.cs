@@ -44,21 +44,36 @@ namespace PowerUsageApi.Controllers
                 else
                     trainedModel = mlContext.Model.Load(modelSavePath, out DataViewSchema modelSchema);
 
-                var p = new Prediction(trainedModel, foreCast);
-                results = p.Predict();
-
-                //XMLHandler.GenerateXML(results, center);
-                //XmlSerializer serialiser = new XmlSerializer(typeof(List<PredictionResult>));
-
-
+                var usagePredictions = new Prediction(trainedModel, foreCast);
+                return Ok(XMLHandler.SerializeXml<List<PredictionResult>>(usagePredictions.Predict()));
 
             }
             catch (Exception ex)
             {
-
+                return BadRequest(ex.Message);
             }
-            return Ok(results);
 
+        }
+
+        [SwaggerImplementationNotes("Train the machine learning model for a center. Parameters: BEV,UTC,CCK: Begin Date: 01/01/2018; End Date: 06/01/2020")]
+        [HttpGet]
+        [Route("api/EnergyUsage/Train{BldgId}")]
+        public IHttpActionResult Trainmodel(string BldgId, DateTime StartDate, DateTime EndDate)
+        {
+            try
+            {
+                var ds = new DataService();
+                var center = ds.GetSetting(BldgId);
+                IEnumerable<EnergyUsage> modelData;
+                modelData = ds.GetTrainingData(center, StartDate.ToShortDateString(), StartDate.ToShortDateString());
+                var mlModel = new MLModel(modelData, modelSavePath);
+                mlModel.Train();
+                return Ok($"{center.CenterAbbr} mechine learning model trained");
+            }
+            catch(Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
     }
 }

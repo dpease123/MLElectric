@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using System.Web.Http;
 using PowerUsageApi.SwaggerFilters;
+using System;
 
 namespace PowerUsageApi.Controllers
 {
@@ -12,11 +13,23 @@ namespace PowerUsageApi.Controllers
         [Route("api/Weather/24Hour/{BldgId}")]
         public IHttpActionResult Get24Hour(string BldgId)
         {
-            var ws = new WeatherService();
-            var ds = new DataService();
-            var setting = ds.GetSetting(BldgId);
-            var foreCast = Task.Run(async () => await ws.Get24HrForecast(setting)).Result;
-            return Ok(foreCast);
+            try
+            {
+                var ws = new WeatherService();
+                var ds = new DataService();
+
+                var center = ds.GetSetting(BldgId);
+                if (center == null)
+                    return BadRequest("Building not found");
+
+                var foreCast = Task.Run(async () => await ws.Get24HrForecast(center)).Result;
+                return Ok(foreCast);
+            }
+            catch(Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        
         }
 
         [SwaggerImplementationNotes("Returns 3 day weather forecast for building specified i.e. BEV,UTC,CCK")]
@@ -24,11 +37,22 @@ namespace PowerUsageApi.Controllers
         [Route("api/Weather/3Day/{BldgId}")]
         public IHttpActionResult Get3Day(string BldgId)
         {
-            var ws = new WeatherService();
-            var ds = new DataService();
-            var setting = ds.GetSetting(BldgId);
-            var foreCast = Task.Run(async () => await ws.Get3DayForecast(setting)).Result;
-            return Ok(foreCast);
+            try
+            {
+                var ws = new WeatherService();
+                var ds = new DataService();
+                var center = ds.GetSetting(BldgId);
+                if (center == null)
+                    return BadRequest("Building not found");
+
+                var foreCast = Task.Run(async () => await ws.Get3DayForecast(center)).Result;
+                return Ok(foreCast);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+         
         }
 
     }
