@@ -17,12 +17,14 @@ namespace PowerUsageApi.Controllers
     public class EnergyUsageController : ApiController
     {
         readonly List<string> LoadDates = new List<string>
-                {
-                    "01/01/2017, 12/31/2017",
-                    "01/01/2018, 12/31/2018",
-                    "01/01/2019, 04/23/2019",
-                    "05/015/2019, " + DateTime.Now.ToShortDateString()
-                };
+        {
+            "01/01/2017, 05/30/2017",
+            "06/01/2017, 12/31/2017",
+            "01/01/2018, 05/30/2018",
+            "06/01/2018, 12/31/2018",
+            "01/01/2019, 04/23/2019",
+            "05/015/2019, " + DateTime.Now.ToShortDateString()
+        };
 
         [SwaggerImplementationNotes("Returns the predicted next 24hrs. of energy usage for a building. Parameters: BldgId= BEV,UTC,CCK")]
         [HttpGet]

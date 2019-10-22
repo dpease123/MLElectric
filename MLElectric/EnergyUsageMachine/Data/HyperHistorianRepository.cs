@@ -133,7 +133,7 @@ namespace EnergyUsageMachine.Data
         {
 
             var ret = ctx.Database.ExecuteSqlCommand(
-                   "DELETE FROM [MLHistoricalData_BackUp] WHERE [CenterAbbr] = @BldgId",
+                   "DELETE FROM [MLHistoricalData] WHERE [CenterAbbr] = @BldgId",
                     new SqlParameter("@BldgId", BldgId));
             return ret > 0;
         }
