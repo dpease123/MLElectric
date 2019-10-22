@@ -14,5 +14,6 @@ namespace EnergyUsageMachine.Models
         [Key]
         public string CenterAbbr { get; set; }
         public string WeatherURL { get; set; }
+        public DateTime? DateLastRecord { get; set; }
     }
 }

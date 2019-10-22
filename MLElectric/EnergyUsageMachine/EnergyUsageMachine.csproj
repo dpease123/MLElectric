@@ -120,6 +120,7 @@
     <Compile Include="Data\HyperHistorianRepository.cs" />
     <Compile Include="Evaluate.cs" />
     <Compile Include="MLModel.cs" />
+    <Compile Include="Models\MLData.cs" />
     <Compile Include="Models\MLSetting.cs" />
     <Compile Include="POCO\EnergyUsage.cs" />
     <Compile Include="POCO\Forecast.cs" />

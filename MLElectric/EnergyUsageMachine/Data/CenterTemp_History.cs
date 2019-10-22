@@ -10,8 +10,10 @@ namespace EnergyUsageMachine.Data
     {
         public string Tag { get; set; }
         public DateTime CurrentTimeStamp { get; set; }
-        public double CurrentAvgValue { get; set; }
-      
+        public float CurrentAvgValue { get; set; }
+
+        public string CenterAbbr { get; set; }
+
 
     }
 }

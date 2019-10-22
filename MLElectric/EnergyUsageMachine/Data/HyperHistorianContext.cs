@@ -11,11 +11,12 @@ namespace EnergyUsageMachine.Data
     {
 
         public DbSet<MLSetting> MLSettings { get; set; }
+        public DbSet<MLData> MLData { get; set; }
 
         public HyperHistorianContext()
             : base("name=HyperHistorianContext")
         {
-            this.SetCommandTimeOut(900);
+            this.SetCommandTimeOut(1800);
         }
 
         public void SetCommandTimeOut(int Timeout)
