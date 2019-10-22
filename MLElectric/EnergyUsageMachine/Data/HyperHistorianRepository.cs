@@ -72,33 +72,44 @@ namespace EnergyUsageMachine.Data
             var a = DateTime.Parse(startDate);
             var z = DateTime.Parse(endDate);
 
-            var tempData = from data in ctx.MLData
-                            where data.CenterAbbr == center.CenterAbbr
-                             && data.TimeStamp >= a && data.TimeStamp <= z && data.Fulltag.Contains("_TEMP")
-                            select data;
+            var tempData = (ctx.MLData.Where(x => x.CenterAbbr == center.CenterAbbr
+                             && x.TimeStamp >= a && x.TimeStamp <= z && x.Fulltag.Contains("_F")).ToList());
 
-            var energyData = from data in ctx.MLData
-                             where data.CenterAbbr == center.CenterAbbr
-                              && data.TimeStamp >= a && data.TimeStamp <= z && data.Fulltag.Contains("_DEM")
-                             select data;
 
-            var merged = from temp in tempData
+            var energyData = (ctx.MLData.Where(x => x.CenterAbbr == center.CenterAbbr
+                              && x.TimeStamp >= a && x.TimeStamp <= z && x.Fulltag.Contains("_DEM")).ToList());
+                             
+
+            var merged = (from temp in tempData
                          join energy in energyData
                             on temp.TimeStamp equals energy.TimeStamp
-                         select new EnergyUsage
+                         select new 
                          {
                              Center = temp.CenterAbbr,
-                             AvgTemp = Math.Round(temp.AvgValue, 6, MidpointRounding.ToEven),
-                             kWH = float.Parse(Math.Round(energy.AvgValue, 6, MidpointRounding.ToEven).ToString()),
-                             DayOfWeek = (int)temp.TimeStamp.DayOfWeek,
-                             Hour = temp.TimeStamp.Hour
-                         };
+                             AvgTemp = temp.AvgValue,
+                             kWH = energy.AvgValue,
+                             Date = temp.TimeStamp,
+                         }).ToList();
 
-                 
+            var usage = new List<EnergyUsage>();
+            foreach (var m in merged)
+            {
+                var e = new EnergyUsage()
+                {
+                    Center = m.Center,
+                    AvgTemp = Math.Round(m.AvgTemp, 6, MidpointRounding.ToEven),
+                    kWH = float.Parse(Math.Round(m.kWH, 6, MidpointRounding.ToEven).ToString()),
+                    DayOfWeek = (int)m.Date.DayOfWeek,
+                    Hour = m.Date.Hour
+                };
+                usage.Add(e);
+            }
 
-            return merged.AsEnumerable();
+
+            return usage.AsEnumerable();
         }
 
+       
         public MLSetting GetMLSetting(string Id)
         {
             return ctx.MLSettings.Find(Id);

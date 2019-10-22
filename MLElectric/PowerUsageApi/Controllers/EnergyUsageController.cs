@@ -141,10 +141,9 @@ namespace PowerUsageApi.Controllers
 
         [SwaggerImplementationNotes("Delete and refresh data for a center. Parameters: BldgId: BEV,UTC,CCK")]
         [HttpGet]
-        [Route("api/EnergyUsage/RefreshDataForCenter")]
+        [Route("api/EnergyUsage/RefreshDataForCenter/{BldgId}")]
         public IHttpActionResult RefreshDataForCenter(string BldgId)
         {
-            var repo = new HyperHistorianRepository();
             var ds = new DataService();
             var center = ds.GetSetting(BldgId.Substring(0, 3).ToUpper());
 
@@ -160,10 +159,10 @@ namespace PowerUsageApi.Controllers
                     var a = d.Split(',')[0];
                     var z = d.Split(',')[1];
                     IEnumerable<EnergyUsage> modelData;
-                    //modelData = ds.StageTrainingData(center, a, z);
+                    modelData = ds.StageTrainingData(center, a, z);
                 };
 
-                repo.UpdateSetting(center);
+                center = ds.UpdateSetting(center);
             }
             catch (Exception ex)
             {

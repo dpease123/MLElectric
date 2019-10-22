@@ -6,11 +6,13 @@ namespace EnergyUsageMachine.Data
     using System.Linq;
     using System.Data.Entity.Infrastructure;
     using EnergyUsageMachine.Models;
+    using System.Data.Entity.ModelConfiguration.Conventions;
 
     public partial class HyperHistorianContext : DbContext
     {
 
         public DbSet<MLSetting> MLSettings { get; set; }
+       
         public DbSet<MLData> MLData { get; set; }
 
         public HyperHistorianContext()
@@ -28,6 +30,8 @@ namespace EnergyUsageMachine.Data
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
+            Database.SetInitializer<HyperHistorianContext>(null);
+            base.OnModelCreating(modelBuilder);
         }
     }
 }
