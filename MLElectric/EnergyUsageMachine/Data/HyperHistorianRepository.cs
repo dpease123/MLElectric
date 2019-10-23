@@ -137,6 +137,23 @@ namespace EnergyUsageMachine.Data
                     new SqlParameter("@BldgId", BldgId));
             return ret > 0;
         }
+
+        public DateTime GetMaxLoadDate(MLSetting center)
+        {
+            var tempData = (ctx.MLData.Where(x => x.CenterAbbr == center.CenterAbbr && x.Fulltag.Contains("_F")).ToList());
+
+            var energyData = (ctx.MLData.Where(x => x.CenterAbbr == center.CenterAbbr && x.Fulltag.Contains("_DEM")).ToList());
+
+
+            var merged = (from temp in tempData
+                          join energy in energyData
+                             on temp.TimeStamp equals energy.TimeStamp
+                          select new
+                          {
+                              Date = temp.TimeStamp,
+                          });
+            return merged.Max(x => x.Date);
+        }
     }
     
 }

@@ -102,7 +102,40 @@ namespace PowerUsageApi.Controllers
             }
         }
 
-        [SwaggerImplementationNotes("CAUTION: Delete and refresh data for ALL centers. Parameters: None")]
+        [SwaggerImplementationNotes("Load and train the machine learning model appending the latest data. Parameters: BldgId: BEV,UTC,CCK")]
+        [HttpGet]
+        [Route("api/EnergyUsage/Train/Today/{BldgId}")]
+        public IHttpActionResult TrainNow(string BldgId)
+        {
+            var ds = new DataService();
+            var center = ds.GetSetting(BldgId.Substring(0, 3).ToUpper());
+
+            if (center == null)
+                return BadRequest("Building not found");
+
+            var a = ds.GetMaxLoadDate(center);
+            var z = DateTime.Now;
+            try
+            {
+                IEnumerable<EnergyUsage> modelData;
+
+                ds.StageTrainingData(center, a.ToShortTimeString(), z.ToShortDateString());
+                modelData = ds.GetTrainingData(center, "01/01/2017", z.ToShortTimeString());
+                var mlModel = new MLModel(modelData, GetPath(center));
+                mlModel.Train();
+                center = ds.UpdateSetting(center);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+
+            return Ok($"{center.CenterAbbr} machine learning model trained with latest data starting {a.ToShortDateString()} to {z.ToShortDateString()}");
+
+        }
+
+
+        [SwaggerImplementationNotes("CAUTION: Will Delete and refresh ALL center data from Jan 2017 to now. Parameters: None")]
         [HttpGet]
         [Route("api/EnergyUsage/RefreshAllData")]
         public IHttpActionResult RefreshAllData()
@@ -141,7 +174,7 @@ namespace PowerUsageApi.Controllers
 
         }
 
-        [SwaggerImplementationNotes("Delete and refresh data for a center. Parameters: BldgId: BEV,UTC,CCK")]
+        [SwaggerImplementationNotes("CAUTION: Will Delete and refresh center data from Jan 2017 to Now. Parameters: BldgId: BEV,UTC,CCK")]
         [HttpGet]
         [Route("api/EnergyUsage/RefreshDataForCenter/{BldgId}")]
         public IHttpActionResult RefreshDataForCenter(string BldgId)

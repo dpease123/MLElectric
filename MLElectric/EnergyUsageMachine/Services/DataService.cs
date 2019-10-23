@@ -43,5 +43,10 @@ namespace EnergyUsageMachine.Services
         {
             return hhr.UpdateSetting(m);
         }
+
+        public DateTime GetMaxLoadDate(MLSetting center)
+        {
+            return hhr.GetMaxLoadDate(center);
+        }
     }
 }
