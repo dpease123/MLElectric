@@ -63,7 +63,51 @@ namespace PowerUsageApi.Controllers
 
         }
 
-        [SwaggerImplementationNotes("Train the machine learning model for a center. Parameters: BldgId: BEV,UTC,CCK; Begin Date: 01/01/2018; End Date: 06/01/2020")]
+        [SwaggerImplementationNotes("Train ALL center machine learning models using previously staged data. Parameters: Begin Date: 01/01/2018 or '?' for all; End Date: 06/01/2020 or '?' for all")]
+        [HttpGet]
+        [Route("api/EnergyUsage/Train/All")]
+        public IHttpActionResult TrainAllModels(string StartDate, string EndDate)
+        {
+            try
+            {
+                if (StartDate == "?" || EndDate == "?")
+                {
+                    StartDate = "01/01/2017";
+                    EndDate = DateTime.Now.ToShortDateString();
+
+                }
+                else
+                {
+                    if (!IsValidDate(StartDate))
+                        return BadRequest("Required or invalid start date");
+
+                    if (!IsValidDate(EndDate))
+                        return BadRequest("Required or invalid end date");
+
+                    if (DateTime.Parse(StartDate) > DateTime.Parse(EndDate) || (DateTime.Parse(EndDate) < DateTime.Parse(StartDate)))
+                        return BadRequest("Start date must be prior to end date");
+                }
+
+                var ds = new DataService();
+                var centers = ds.GetAllSettings();
+
+                foreach (var center in centers)
+                {
+                    IEnumerable<EnergyUsage> modelData;
+                    modelData = ds.GetTrainingData(center, StartDate, EndDate);
+                    var mlModel = new MLModel(modelData, GetPath(center));
+                    mlModel.Train();
+                }
+                return Ok($"All center machine learning models trained using data spanning {StartDate} - {EndDate}");
+
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [SwaggerImplementationNotes("Train the machine learning model using previously staged data for a center. Parameters: BldgId: BEV,UTC,CCK; Begin Date: 01/01/2018 or '?' for all; End Date: 06/01/2020 or '?' for all")]
         [HttpGet]
         [Route("api/EnergyUsage/Train/{BldgId}")]
         public IHttpActionResult Trainmodel(string BldgId, string StartDate, string EndDate)
@@ -79,16 +123,24 @@ namespace PowerUsageApi.Controllers
                 if (center == null)
                     return BadRequest("Building not found");
 
-             
+                if (StartDate == "?" || EndDate == "?")
+                {
+                    StartDate = "01/01/2017";
+                    EndDate = DateTime.Now.ToShortDateString();
+                }
+                else
+                {
+                    if (!IsValidDate(StartDate))
+                        return BadRequest("Required or invalid start date");
 
-                if (!IsValidDate(StartDate))
-                    return BadRequest("Required or invalid start date");
+                    if (!IsValidDate(EndDate))
+                        return BadRequest("Required or invalid end date");
 
-                if (!IsValidDate(EndDate))
-                    return BadRequest("Required or invalid end date");
+                    if (DateTime.Parse(StartDate) > DateTime.Parse(EndDate) || (DateTime.Parse(EndDate) < DateTime.Parse(StartDate)))
+                        return BadRequest("Start date must be prior to end date");
+                }
 
-                if (DateTime.Parse(StartDate) > DateTime.Parse(EndDate) || (DateTime.Parse(EndDate) < DateTime.Parse(StartDate)))
-                    return BadRequest("Start date must be prior to end date");
+            
 
                 IEnumerable<EnergyUsage> modelData;
                 modelData = ds.GetTrainingData(center, StartDate, EndDate);
@@ -102,9 +154,9 @@ namespace PowerUsageApi.Controllers
             }
         }
 
-        [SwaggerImplementationNotes("Load and train the machine learning model appending the latest data. Parameters: BldgId: BEV,UTC,CCK")]
+        [SwaggerImplementationNotes("Load and train the machine learning model for a center appending the latest data to the model. Parameters: BldgId: BEV,UTC,CCK")]
         [HttpGet]
-        [Route("api/EnergyUsage/Train/Today/{BldgId}")]
+        [Route("api/EnergyUsage/Train/NewData/{BldgId}")]
         public IHttpActionResult TrainNow(string BldgId)
         {
             var ds = new DataService();
@@ -134,10 +186,9 @@ namespace PowerUsageApi.Controllers
 
         }
 
-
         [SwaggerImplementationNotes("CAUTION: Will Delete and refresh ALL center data from Jan 2017 to now. Parameters: None")]
         [HttpGet]
-        [Route("api/EnergyUsage/RefreshAllData")]
+        [Route("api/EnergyUsage/RefreshData/All")]
         public IHttpActionResult RefreshAllData()
         {
             var repo = new HyperHistorianRepository();
@@ -176,7 +227,7 @@ namespace PowerUsageApi.Controllers
 
         [SwaggerImplementationNotes("CAUTION: Will Delete and refresh center data from Jan 2017 to Now. Parameters: BldgId: BEV,UTC,CCK")]
         [HttpGet]
-        [Route("api/EnergyUsage/RefreshDataForCenter/{BldgId}")]
+        [Route("api/EnergyUsage/RefreshData/{BldgId}")]
         public IHttpActionResult RefreshDataForCenter(string BldgId)
         {
             var ds = new DataService();

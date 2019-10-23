@@ -77,7 +77,7 @@ namespace EnergyUsageMachine.Data
 
 
             var energyData = (ctx.MLData.Where(x => x.CenterAbbr == center.CenterAbbr
-                              && x.TimeStamp >= a && x.TimeStamp <= z && x.Fulltag.Contains("_DEM")).ToList());
+                              && x.TimeStamp >= a && x.TimeStamp <= z && x.Fulltag.Contains("Peak_DEM")).ToList());
                              
 
             var merged = (from temp in tempData
@@ -142,7 +142,7 @@ namespace EnergyUsageMachine.Data
         {
             var tempData = (ctx.MLData.Where(x => x.CenterAbbr == center.CenterAbbr && x.Fulltag.Contains("Temperature_F")).ToList());
 
-            var energyData = (ctx.MLData.Where(x => x.CenterAbbr == center.CenterAbbr && x.Fulltag.Contains("_DEM")).ToList());
+            var energyData = (ctx.MLData.Where(x => x.CenterAbbr == center.CenterAbbr && x.Fulltag.Contains("Peak_DEM")).ToList());
 
 
             var merged = (from temp in tempData
