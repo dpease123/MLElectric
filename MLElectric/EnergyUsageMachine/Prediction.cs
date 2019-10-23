@@ -6,6 +6,8 @@ using Newtonsoft.Json;
 using EnergyUsageMachine.POCO;
 using EnergyUsageMachine.Data;
 using EnergyUsageMachine;
+using EnergyUsageMachine.Models;
+using EnergyUsageMachine.ViewModels;
 
 namespace EnergyUsageMachine
 {
@@ -13,11 +15,21 @@ namespace EnergyUsageMachine
     {
         private readonly ITransformer _trainedModel;
         private readonly Forecast _forecast;
+        private readonly MLSetting _center;
+        private readonly MLTestObject _testObj;
 
-        public Prediction(ITransformer trainedModel, Forecast forecast)
+        public Prediction(ITransformer trainedModel, Forecast forecast, MLSetting center)
         {
             _trainedModel = trainedModel;
             _forecast = forecast;
+            _center = center;
+        }
+
+        public Prediction(ITransformer trainedModel, MLTestObject testObj, MLSetting center)
+        {
+            _trainedModel = trainedModel;
+            _center = center;
+            _testObj = testObj;
         }
 
         public List<PredictionResult> Predict()
@@ -33,11 +45,11 @@ namespace EnergyUsageMachine
                 var test = new EnergyUsage()
                 {
 
-                    Center = "Taubman/Region 34/Beverly Center/Temperature_F",
+                    Center = _center.CenterAbbr,
                     DayOfWeek = (int)fc.startTime.DayOfWeek,
                     Hour = fc.startTime.Hour,
                     AvgTemp = fc.temperature,
-                    kWH = 0 // To
+                    kWH = 0 
                 };
 
                 var prediction = predictionFunction.Predict(test);
@@ -51,6 +63,31 @@ namespace EnergyUsageMachine
             }
 
             return PredictionResultList;
+        }
+
+        public PredictionResult PredictSingle()
+        {
+            var _MLContext = new MLContext();
+            var PredictionResultList = new List<PredictionResult>();
+            var predictionFunction = _MLContext.Model.CreatePredictionEngine<EnergyUsage, EnergyUsagePrediction>(_trainedModel);
+
+                var test = new EnergyUsage()
+                {
+                    Center = _center.CenterAbbr,
+                    DayOfWeek = (int)_testObj.DayOfWeek,
+                    Hour = _testObj.Hour,
+                    AvgTemp = _testObj.Temperature,
+                    kWH = 0 // To
+                };
+
+                var prediction = predictionFunction.Predict(test);
+                var predictionResult = new PredictionResult()
+                {
+                    kWH_Usage = prediction.kWH,
+                    Hour = test.Hour
+                };
+
+            return predictionResult;
         }
     }
 }

@@ -11,6 +11,7 @@ using System.Xml.Serialization;
 using System;
 using System.Web.Configuration;
 using EnergyUsageMachine.Data;
+using EnergyUsageMachine.ViewModels;
 
 namespace PowerUsageApi.Controllers
 {
@@ -25,6 +26,41 @@ namespace PowerUsageApi.Controllers
             "01/01/2019, 04/23/2019",
             "05/015/2019, " + DateTime.Now.ToShortDateString()
         };
+
+        [SwaggerImplementationNotes("Returns the predicted energy usage for a single point in time.")]
+        [HttpPost]
+        [Route("api/EnergyUsage/Predict/Single")]
+        public IHttpActionResult PredictSingle(MLTestObject testObj)
+        {
+            if (string.IsNullOrEmpty(testObj.CenterAbbr))
+                return BadRequest("3 character building abbreviation required");
+
+            var ds = new DataService();
+            var center = ds.GetSetting((testObj.CenterAbbr.Substring(0, 3).ToUpper()));
+
+            if (center == null)
+                return BadRequest("Building not found");
+
+            ITransformer trainedModel;
+            var result = new PredictionResult();
+           
+            try
+            {
+                var mlContext = new MLContext();
+                if (!File.Exists(GetPath(center)))
+                    return BadRequest($"No machine learning model found for {center.CenterAbbr}");
+
+                trainedModel = mlContext.Model.Load(GetPath(center), out DataViewSchema modelSchema);
+
+                var usagePredictions = new Prediction(trainedModel, testObj, center);
+                return Ok(XMLHandler.SerializeXml<PredictionResult>(usagePredictions.PredictSingle()));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+
+        }
 
         [SwaggerImplementationNotes("Returns the predicted next 24hrs. of energy usage for a building. Parameters: BldgId= BEV,UTC,CCK")]
         [HttpGet]
@@ -53,7 +89,7 @@ namespace PowerUsageApi.Controllers
 
                 var weatherForeCast = Task.Run(async () => await ws.Get24HrForecast(center)).Result;
 
-                var usagePredictions = new Prediction(trainedModel, weatherForeCast);
+                var usagePredictions = new Prediction(trainedModel, weatherForeCast, center);
                 return Ok(XMLHandler.SerializeXml<List<PredictionResult>>(usagePredictions.Predict()));
             }
             catch (Exception ex)
@@ -72,7 +108,7 @@ namespace PowerUsageApi.Controllers
             {
                 if (StartDate == "?" || EndDate == "?")
                 {
-                    StartDate = "01/01/2017";
+                    StartDate = WebConfigurationManager.AppSettings["MLDataStartDate"]; 
                     EndDate = DateTime.Now.ToShortDateString();
 
                 }
@@ -125,7 +161,7 @@ namespace PowerUsageApi.Controllers
 
                 if (StartDate == "?" || EndDate == "?")
                 {
-                    StartDate = "01/01/2017";
+                    StartDate = WebConfigurationManager.AppSettings["MLDataStartDate"];
                     EndDate = DateTime.Now.ToShortDateString();
                 }
                 else
@@ -150,7 +186,7 @@ namespace PowerUsageApi.Controllers
             }
             catch(Exception ex)
             {
-                return BadRequest(ex.Message);
+                return BadRequest(ex.InnerException.ToString());
             }
         }
 
@@ -172,10 +208,11 @@ namespace PowerUsageApi.Controllers
                 IEnumerable<EnergyUsage> modelData;
 
                 ds.StageTrainingData(center, a.ToShortTimeString(), z.ToShortDateString());
-                modelData = ds.GetTrainingData(center, "01/01/2017", z.ToShortTimeString());
+                modelData = ds.GetTrainingData(center, WebConfigurationManager.AppSettings["MLDataStartDate"], z.ToShortTimeString());
+                center = ds.UpdateSetting(center);
                 var mlModel = new MLModel(modelData, GetPath(center));
                 mlModel.Train();
-                center = ds.UpdateSetting(center);
+             
             }
             catch (Exception ex)
             {
@@ -186,7 +223,7 @@ namespace PowerUsageApi.Controllers
 
         }
 
-        [SwaggerImplementationNotes("CAUTION: Will Delete and refresh ALL center data from Jan 2017 to now. Parameters: None")]
+        [SwaggerImplementationNotes("CAUTION Long operation: Will delete and refresh ALL staged data. This will take hours to complete. Parameters: None")]
         [HttpGet]
         [Route("api/EnergyUsage/RefreshData/All")]
         public IHttpActionResult RefreshAllData()
@@ -225,7 +262,7 @@ namespace PowerUsageApi.Controllers
 
         }
 
-        [SwaggerImplementationNotes("CAUTION: Will Delete and refresh center data from Jan 2017 to Now. Parameters: BldgId: BEV,UTC,CCK")]
+        [SwaggerImplementationNotes("CAUTION Long Operation: Will delete, refresh staged data and train the model for center provided. Parameters: BldgId: BEV,UTC,CCK")]
         [HttpGet]
         [Route("api/EnergyUsage/RefreshData/{BldgId}")]
         public IHttpActionResult RefreshDataForCenter(string BldgId)
@@ -235,6 +272,7 @@ namespace PowerUsageApi.Controllers
 
             if (center == null)
                 return BadRequest("Building not found");
+            var dataList = new List<EnergyUsage>();
 
             ds.DeleteCenterData(center.CenterAbbr);
            
@@ -244,11 +282,13 @@ namespace PowerUsageApi.Controllers
                 {
                     var a = d.Split(',')[0];
                     var z = d.Split(',')[1];
-                    IEnumerable<EnergyUsage> modelData;
-                    modelData = ds.StageTrainingData(center, a, z);
+                    dataList.AddRange(ds.StageTrainingData(center, a, z));
                 };
 
                 center = ds.UpdateSetting(center);
+                var mlModel = new MLModel(dataList, GetPath(center));
+                mlModel.Train();
+               
             }
             catch (Exception ex)
             {
