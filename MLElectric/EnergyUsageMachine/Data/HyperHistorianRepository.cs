@@ -73,7 +73,7 @@ namespace EnergyUsageMachine.Data
             var z = DateTime.Parse(endDate);
 
             var tempData = (ctx.MLData.Where(x => x.CenterAbbr == center.CenterAbbr
-                             && x.TimeStamp >= a && x.TimeStamp <= z && x.Fulltag.Contains("_F")).ToList());
+                             && x.TimeStamp >= a && x.TimeStamp <= z && x.Fulltag.Contains("Temperature_F")).ToList());
 
 
             var energyData = (ctx.MLData.Where(x => x.CenterAbbr == center.CenterAbbr
@@ -140,7 +140,7 @@ namespace EnergyUsageMachine.Data
 
         public DateTime GetMaxLoadDate(MLSetting center)
         {
-            var tempData = (ctx.MLData.Where(x => x.CenterAbbr == center.CenterAbbr && x.Fulltag.Contains("_F")).ToList());
+            var tempData = (ctx.MLData.Where(x => x.CenterAbbr == center.CenterAbbr && x.Fulltag.Contains("Temperature_F")).ToList());
 
             var energyData = (ctx.MLData.Where(x => x.CenterAbbr == center.CenterAbbr && x.Fulltag.Contains("_DEM")).ToList());
 
