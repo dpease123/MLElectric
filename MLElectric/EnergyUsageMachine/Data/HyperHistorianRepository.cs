@@ -48,24 +48,24 @@ namespace EnergyUsageMachine.Data
 
         }
 
-        public IEnumerable<EnergyUsage> StageTrainingData(CenterConfig center, string startDate, string endDate)
+        public void StageTrainingData(CenterConfig center, string startDate, string endDate)
         {
             var tempData = GetTemperatureData(center, startDate, endDate);
             var energyData = GetEnergyDemandData(center, startDate, endDate);
 
-            var merged = from temp in tempData
-                         join energy in energyData
-                            on temp.CurrentTimeStamp equals energy.CurrentTimeStamp
-                         select new EnergyUsage
-                         {
-                             Center = temp.CenterAbbr,
-                             AvgTemp = Math.Round(temp.CurrentAvgValue, 6, MidpointRounding.ToEven),
-                             kWH = float.Parse(Math.Round(energy.CurrentAvgValue, 6, MidpointRounding.ToEven).ToString()),
-                             DayOfWeek = (int)temp.CurrentTimeStamp.DayOfWeek,
-                             Hour = temp.CurrentTimeStamp.Hour
-                         };
+            //var merged = from temp in tempData
+            //             join energy in energyData
+            //                on temp.CurrentTimeStamp equals energy.CurrentTimeStamp
+            //             select new EnergyUsage
+            //             {
+            //                 Center = temp.CenterAbbr,
+            //                 AvgTemp = Math.Round(temp.CurrentAvgValue, 6, MidpointRounding.ToEven),
+            //                 kWH = float.Parse(Math.Round(energy.CurrentAvgValue, 6, MidpointRounding.ToEven).ToString()),
+            //                 DayOfWeek = (int)temp.CurrentTimeStamp.DayOfWeek,
+            //                 Hour = temp.CurrentTimeStamp.Hour
+            //             };
 
-              return merged.AsEnumerable();
+            //  return merged.AsEnumerable();
         }
 
         public IEnumerable<EnergyUsage> GetTrainingData(CenterConfig center, string startDate, string endDate)

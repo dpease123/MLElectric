@@ -209,8 +209,8 @@ namespace PowerUsageApi.Controllers
             {
                 IEnumerable<EnergyUsage> modelData;
 
-                ds.StageTrainingData(center, a.ToShortTimeString(), z.ToShortDateString());
-                modelData = ds.GetTrainingData(center, WebConfigurationManager.AppSettings["MLDataStartDate"], z.ToShortTimeString());
+                ds.StageTrainingData(center, a.ToShortDateString(), z.ToShortDateString());
+                modelData = ds.GetTrainingData(center, WebConfigurationManager.AppSettings["MLDataStartDate"], z.ToShortDateString());
                 center = ds.UpdateSetting(center);
                 var mlModel = new MLModel(modelData, GetPath(center));
                 mlModel.Train();
@@ -225,10 +225,44 @@ namespace PowerUsageApi.Controllers
 
         }
 
-
-        [SwaggerImplementationNotes("Returns a summary of staged Iconics data for use in the prediction models.")]
+        [SwaggerImplementationNotes("Load and train the machine learning model for all centers appending the latest data to the model. Parameters: None")]
         [HttpGet]
-        [Route("api/EnergyUsage/DataSummary")]
+        [Route("api/EnergyUsage/Train/NewData/All")]
+        public IHttpActionResult TrainNow()
+        {
+            var ds = new DataService();
+            var centers = ds.GetAllCenterConfigs();
+
+            foreach (var center in centers)
+            {
+                var a = ds.GetMaxLoadDate(center);
+                var z = DateTime.Now.ToShortDateString();
+                try
+                {
+                    IEnumerable<EnergyUsage> modelData;
+
+                    ds.StageTrainingData(center, a.ToShortDateString(), z);
+                    modelData = ds.GetTrainingData(center, WebConfigurationManager.AppSettings["MLDataStartDate"], z);
+                    ds.UpdateSetting(center);
+                    var mlModel = new MLModel(modelData, GetPath(center));
+                    mlModel.Train();
+
+                }
+                catch (Exception ex)
+                {
+                    return BadRequest(ex.InnerException.ToString());
+                }
+            }
+
+
+            return Ok($"All center machine learning models successfully trained.");
+
+        }
+
+
+        [SwaggerImplementationNotes("Returns metrics on staged Iconics data for use in the prediction models.")]
+        [HttpGet]
+        [Route("api/EnergyUsage/GetDataSummary")]
         public IHttpActionResult DataSummary()
         {
             var ds = new DataService();
@@ -252,23 +286,24 @@ namespace PowerUsageApi.Controllers
             var ds = new DataService();
             var centers = ds.GetAllCenterConfigs();
           
-            foreach (var cen in centers)
+            foreach (var center in centers)
             {
                 try
                 {
-                    ds.DeleteCenterData(cen.CenterAbbr);
+                    ds.DeleteCenterData(center.CenterAbbr);
 
                     foreach (var d in LoadDates)
                     {
                         var a = d.Split(',')[0];
                         var z = d.Split(',')[1];
-                        IEnumerable<EnergyUsage> modelData;
-                        modelData = ds.StageTrainingData(cen, a, z);
+                        ds.StageTrainingData(center, a, z);
                     }
-                  
-                    repo.UpdateSetting(cen);
 
-
+                    IEnumerable<EnergyUsage> modelData;
+                    modelData = ds.GetTrainingData(center, WebConfigurationManager.AppSettings["MLDataStartDate"], DateTime.Now.ToShortDateString());
+                    ds.UpdateSetting(center);
+                    var mlModel = new MLModel(modelData, GetPath(center));
+                    mlModel.Train();
                 }
             
                 catch (Exception ex)
@@ -302,13 +337,15 @@ namespace PowerUsageApi.Controllers
                 {
                     var a = d.Split(',')[0];
                     var z = d.Split(',')[1];
-                    dataList.AddRange(ds.StageTrainingData(center, a, z));
+                    ds.StageTrainingData(center, a, z);
                 };
 
+                IEnumerable<EnergyUsage> modelData;
+                modelData = ds.GetTrainingData(center, WebConfigurationManager.AppSettings["MLDataStartDate"], DateTime.Now.ToShortDateString());
                 center = ds.UpdateSetting(center);
-                var mlModel = new MLModel(dataList, GetPath(center));
+                var mlModel = new MLModel(modelData, GetPath(center));
                 mlModel.Train();
-               
+
             }
             catch (Exception ex)
             {

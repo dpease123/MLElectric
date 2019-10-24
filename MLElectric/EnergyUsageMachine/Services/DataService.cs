@@ -29,9 +29,9 @@ namespace EnergyUsageMachine.Services
             return hhr.GetTrainingData(center, startDate, endDate).ToList();
         }
 
-        public IEnumerable<EnergyUsage> StageTrainingData(CenterConfig center, string startDate, string endDate)
+        public void StageTrainingData(CenterConfig center, string startDate, string endDate)
         {
-            return hhr.StageTrainingData(center, startDate, endDate).ToList();
+            hhr.StageTrainingData(center, startDate, endDate);
         }
 
         public bool DeleteCenterData(string BldgId)
