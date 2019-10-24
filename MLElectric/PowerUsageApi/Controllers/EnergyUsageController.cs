@@ -27,7 +27,7 @@ namespace PowerUsageApi.Controllers
             "05/015/2019, " + DateTime.Now.ToShortDateString()
         };
 
-        [SwaggerImplementationNotes("Returns the predicted energy usage for a single point in time.")]
+        [SwaggerImplementationNotes("Returns a single energy usage prediction for testing purposes.")]
         [HttpPost]
         [Route("api/EnergyUsage/Predict/Single")]
         public IHttpActionResult PredictSingle(MLTestObject testObj)
@@ -53,7 +53,8 @@ namespace PowerUsageApi.Controllers
                 trainedModel = mlContext.Model.Load(GetPath(center), out DataViewSchema modelSchema);
 
                 var usagePredictions = new Prediction(trainedModel, testObj, center);
-                return Ok(XMLHandler.SerializeXml<PredictionResult>(usagePredictions.PredictSingle()));
+                //return Ok(XMLHandler.SerializeXml<PredictionResult>(usagePredictions.PredictSingle()));
+                return Ok(usagePredictions.PredictSingle());
             }
             catch (Exception ex)
             {
