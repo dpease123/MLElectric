@@ -168,22 +168,7 @@ namespace EnergyUsageMachine.Data
             return ret > 0;
         }
 
-        public DateTime GetMaxLoadDate(CenterConfig center)
-        {
-            var tempData = (ctx.IconicsData.Where(x => x.CenterAbbr == center.CenterAbbr && x.Fulltag.Contains("Temperature_F")).ToList());
-
-            var energyData = (ctx.IconicsData.Where(x => x.CenterAbbr == center.CenterAbbr && x.Fulltag.Contains("Peak_DEM")).ToList());
-
-
-            var merged = (from temp in tempData
-                          join energy in energyData
-                             on temp.TimeStamp equals energy.TimeStamp
-                          select new
-                          {
-                              Date = temp.TimeStamp,
-                          });
-            return merged.Max(x => x.Date);
-        }
+        
     }
     
 }

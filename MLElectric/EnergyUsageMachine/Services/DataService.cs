@@ -47,7 +47,7 @@ namespace EnergyUsageMachine.Services
 
         public DateTime GetMaxLoadDate(CenterConfig center)
         {
-            return hhr.GetMaxLoadDate(center);
+            return hhr.GetTrainingDataSummary(center).MaxDate; ;
         }
 
         public List<DataSummary> GetDataSummary()
