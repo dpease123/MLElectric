@@ -204,13 +204,13 @@ namespace PowerUsageApi.Controllers
                 return BadRequest("Building not found");
 
             var a = ds.GetMaxLoadDate(center);
-            var z = DateTime.Now;
+            var z = DateTime.Now.ToString();
             try
             {
                 IEnumerable<EnergyUsage> modelData;
 
-                ds.StageTrainingData(center, a.ToShortDateString(), z.ToShortDateString());
-                modelData = ds.GetTrainingData(center, WebConfigurationManager.AppSettings["MLDataStartDate"], z.ToShortDateString());
+                ds.StageTrainingData(center, a.ToString(), z.ToString());
+                modelData = ds.GetTrainingData(center, WebConfigurationManager.AppSettings["MLDataStartDate"], z);
                 center = ds.UpdateSetting(center);
                 var mlModel = new MLModel(modelData, GetPath(center));
                 mlModel.Train();
@@ -221,14 +221,14 @@ namespace PowerUsageApi.Controllers
                 return BadRequest(ex.Message);
             }
 
-            return Ok($"{center.CenterAbbr} machine learning model trained with latest data starting {a.ToShortDateString()} to {z.ToShortDateString()}");
+            return Ok($"{center.CenterAbbr} machine learning model trained with latest data starting {a.ToShortDateString()} to {z}");
 
         }
 
         [SwaggerImplementationNotes("Load and train the machine learning model for all centers appending the latest data to the model. Parameters: None")]
         [HttpGet]
         [Route("api/EnergyUsage/Train/NewData/All")]
-        public IHttpActionResult TrainNow()
+        public IHttpActionResult TrainAllNow()
         {
             var ds = new DataService();
             var centers = ds.GetAllCenterConfigs();
@@ -236,13 +236,13 @@ namespace PowerUsageApi.Controllers
             foreach (var center in centers)
             {
                 var a = ds.GetMaxLoadDate(center);
-                var z = DateTime.Now.ToShortDateString();
+                var z = DateTime.Now.ToString();
                 try
                 {
                     IEnumerable<EnergyUsage> modelData;
 
-                    ds.StageTrainingData(center, a.ToShortDateString(), z);
-                    modelData = ds.GetTrainingData(center, WebConfigurationManager.AppSettings["MLDataStartDate"], z);
+                    ds.StageTrainingData(center, a.ToString(), z);
+                    modelData = ds.GetTrainingData(center, WebConfigurationManager.AppSettings["MLDataStartDate"],z);
                     ds.UpdateSetting(center);
                     var mlModel = new MLModel(modelData, GetPath(center));
                     mlModel.Train();
