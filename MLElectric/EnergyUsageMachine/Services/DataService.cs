@@ -13,22 +13,22 @@ namespace EnergyUsageMachine.Services
     {
         HyperHistorianRepository hhr = new HyperHistorianRepository();
 
-        public MLSetting GetSetting(string Id)
+        public CenterConfig GetSetting(string Id)
         {
             return hhr.GetMLSetting(Id);
         }
 
-        public List<MLSetting>GetAllSettings()
+        public List<CenterConfig>GetAllSettings()
         {
             return hhr.GetAllMLSettings();
         }
 
-        public IEnumerable<EnergyUsage> GetTrainingData(MLSetting center, string startDate, string endDate)
+        public IEnumerable<EnergyUsage> GetTrainingData(CenterConfig center, string startDate, string endDate)
         {
             return hhr.GetTrainingData(center, startDate, endDate).ToList();
         }
 
-        public IEnumerable<EnergyUsage> StageTrainingData(MLSetting center, string startDate, string endDate)
+        public IEnumerable<EnergyUsage> StageTrainingData(CenterConfig center, string startDate, string endDate)
         {
             return hhr.StageTrainingData(center, startDate, endDate).ToList();
         }
@@ -39,12 +39,12 @@ namespace EnergyUsageMachine.Services
             return hhr.DeleteCenterData(BldgId);
         }
 
-        public MLSetting UpdateSetting(MLSetting m)
+        public CenterConfig UpdateSetting(CenterConfig m)
         {
             return hhr.UpdateSetting(m);
         }
 
-        public DateTime GetMaxLoadDate(MLSetting center)
+        public DateTime GetMaxLoadDate(CenterConfig center)
         {
             return hhr.GetMaxLoadDate(center);
         }

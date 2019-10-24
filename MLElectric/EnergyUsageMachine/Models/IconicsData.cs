@@ -8,8 +8,8 @@ using System.Threading.Tasks;
 
 namespace EnergyUsageMachine.Models
 {
-    [Table("MLHistoricalData")]
-    public class MLData
+    [Table("ML_InocicsData")]
+    public class IconicsData
     {
         [Key]
         public int Id { get; set; }

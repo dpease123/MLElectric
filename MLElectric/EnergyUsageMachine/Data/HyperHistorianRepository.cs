@@ -13,7 +13,7 @@ namespace EnergyUsageMachine.Data
     public class HyperHistorianRepository
     {
         HyperHistorianContext ctx = new HyperHistorianContext();
-        private List<CenterTemp_History> GetTemperatureData(MLSetting c, string startDate, string endDate)
+        private List<CenterTemp_History> GetTemperatureData(CenterConfig c, string startDate, string endDate)
         {
 
             object[] xparams = {
@@ -30,7 +30,7 @@ namespace EnergyUsageMachine.Data
                     xparams).ToList();
         }
 
-        private List<CenterkWhUsage_History> GetEnergyUsageData(MLSetting c, string startDate, string endDate)
+        private List<CenterkWhUsage_History> GetEnergyDemandData(CenterConfig c, string startDate, string endDate)
         {
             object[] xparams = {
             new SqlParameter("@regionName", c.Region),
@@ -47,10 +47,10 @@ namespace EnergyUsageMachine.Data
 
         }
 
-        public IEnumerable<EnergyUsage> StageTrainingData(MLSetting center, string startDate, string endDate)
+        public IEnumerable<EnergyUsage> StageTrainingData(CenterConfig center, string startDate, string endDate)
         {
             var tempData = GetTemperatureData(center, startDate, endDate);
-            var energyData = GetEnergyUsageData(center, startDate, endDate);
+            var energyData = GetEnergyDemandData(center, startDate, endDate);
 
             var merged = from temp in tempData
                          join energy in energyData
@@ -67,16 +67,16 @@ namespace EnergyUsageMachine.Data
               return merged.AsEnumerable();
         }
 
-        public IEnumerable<EnergyUsage> GetTrainingData(MLSetting center, string startDate, string endDate)
+        public IEnumerable<EnergyUsage> GetTrainingData(CenterConfig center, string startDate, string endDate)
         {
             var a = DateTime.Parse(startDate);
             var z = DateTime.Parse(endDate);
 
-            var tempData = (ctx.MLData.Where(x => x.CenterAbbr == center.CenterAbbr
+            var tempData = (ctx.IconicsData.Where(x => x.CenterAbbr == center.CenterAbbr
                              && x.TimeStamp >= a && x.TimeStamp <= z && x.Fulltag.Contains("Temperature_F")).ToList());
 
 
-            var energyData = (ctx.MLData.Where(x => x.CenterAbbr == center.CenterAbbr
+            var energyData = (ctx.IconicsData.Where(x => x.CenterAbbr == center.CenterAbbr
                               && x.TimeStamp >= a && x.TimeStamp <= z && x.Fulltag.Contains("Peak_DEM")).ToList());
                              
 
@@ -109,20 +109,19 @@ namespace EnergyUsageMachine.Data
             return usage.AsEnumerable();
         }
 
-       
-        public MLSetting GetMLSetting(string Id)
+        public CenterConfig GetMLSetting(string Id)
         {
-            return ctx.MLSettings.Find(Id);
+            return ctx.CenterConfig.Find(Id);
         }
 
-        public List<MLSetting> GetAllMLSettings()
+        public List<CenterConfig> GetAllMLSettings()
         {
-            return ctx.MLSettings.ToList();
+            return ctx.CenterConfig.ToList();
         }
 
-        public MLSetting UpdateSetting(MLSetting m)
+        public CenterConfig UpdateSetting(CenterConfig m)
         {
-            var row = ctx.MLSettings.Find(m.CenterAbbr);
+            var row = ctx.CenterConfig.Find(m.CenterAbbr);
             row.DateLastRecord = DateTime.Now;
             ctx.SaveChanges();
 
@@ -133,16 +132,16 @@ namespace EnergyUsageMachine.Data
         {
 
             var ret = ctx.Database.ExecuteSqlCommand(
-                   "DELETE FROM [MLHistoricalData] WHERE [CenterAbbr] = @BldgId",
+                   "DELETE FROM [ML_IconicsData] WHERE [CenterAbbr] = @BldgId",
                     new SqlParameter("@BldgId", BldgId));
             return ret > 0;
         }
 
-        public DateTime GetMaxLoadDate(MLSetting center)
+        public DateTime GetMaxLoadDate(CenterConfig center)
         {
-            var tempData = (ctx.MLData.Where(x => x.CenterAbbr == center.CenterAbbr && x.Fulltag.Contains("Temperature_F")).ToList());
+            var tempData = (ctx.IconicsData.Where(x => x.CenterAbbr == center.CenterAbbr && x.Fulltag.Contains("Temperature_F")).ToList());
 
-            var energyData = (ctx.MLData.Where(x => x.CenterAbbr == center.CenterAbbr && x.Fulltag.Contains("Peak_DEM")).ToList());
+            var energyData = (ctx.IconicsData.Where(x => x.CenterAbbr == center.CenterAbbr && x.Fulltag.Contains("Peak_DEM")).ToList());
 
 
             var merged = (from temp in tempData

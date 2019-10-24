@@ -42,7 +42,7 @@ namespace PowerUsageApi.Controllers
                 return BadRequest("Building not found");
 
             ITransformer trainedModel;
-            var result = new PredictionResult();
+            var result = new Predictions();
            
             try
             {
@@ -78,7 +78,6 @@ namespace PowerUsageApi.Controllers
                 return BadRequest("Building not found");
 
             ITransformer trainedModel;
-            var results = new List<PredictionResult>();
             var ws = new WeatherService();
             try
             {
@@ -91,7 +90,12 @@ namespace PowerUsageApi.Controllers
                 var weatherForeCast = Task.Run(async () => await ws.Get24HrForecast(center)).Result;
 
                 var usagePredictions = new Prediction(trainedModel, weatherForeCast, center);
-                return Ok(XMLHandler.SerializeXml<List<PredictionResult>>(usagePredictions.Predict()));
+
+                var results = usagePredictions.Predict();
+
+                XMLHandler.GenerateXMLFile(results, center);
+
+                return Ok(XMLHandler.SerializeXml<PredictionResult>(usagePredictions.Predict()));
             }
             catch (Exception ex)
             {
@@ -306,7 +310,7 @@ namespace PowerUsageApi.Controllers
             return DateTime.TryParse(date, out DateTime dDate);
         }
 
-        private static string GetPath(EnergyUsageMachine.Models.MLSetting center)
+        private static string GetPath(EnergyUsageMachine.Models.CenterConfig center)
         {
             return Path.Combine(WebConfigurationManager.AppSettings["MLModelPath"], "Model_" + center.CenterAbbr.ToUpper() + ".zip");
         }
