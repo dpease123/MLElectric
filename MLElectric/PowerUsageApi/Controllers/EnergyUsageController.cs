@@ -36,7 +36,7 @@ namespace PowerUsageApi.Controllers
                 return BadRequest("3 character building abbreviation required");
 
             var ds = new DataService();
-            var center = ds.GetSetting((testObj.CenterAbbr.Substring(0, 3).ToUpper()));
+            var center = ds.GetCenterConfig((testObj.CenterAbbr.Substring(0, 3).ToUpper()));
 
             if (center == null)
                 return BadRequest("Building not found");
@@ -53,7 +53,6 @@ namespace PowerUsageApi.Controllers
                 trainedModel = mlContext.Model.Load(GetPath(center), out DataViewSchema modelSchema);
 
                 var usagePredictions = new Prediction(trainedModel, testObj, center);
-                //return Ok(XMLHandler.SerializeXml<PredictionResult>(usagePredictions.PredictSingle()));
                 return Ok(usagePredictions.PredictSingle());
             }
             catch (Exception ex)
@@ -72,7 +71,7 @@ namespace PowerUsageApi.Controllers
                 return BadRequest("3 character building abbreviation required");
 
             var ds = new DataService();
-            var center = ds.GetSetting(BldgId.Substring(0, 3).ToUpper());
+            var center = ds.GetCenterConfig(BldgId.Substring(0, 3).ToUpper());
 
             if (center == null)
                 return BadRequest("Building not found");
@@ -130,7 +129,7 @@ namespace PowerUsageApi.Controllers
                 }
 
                 var ds = new DataService();
-                var centers = ds.GetAllSettings();
+                var centers = ds.GetAllCenterConfigs();
 
                 foreach (var center in centers)
                 {
@@ -139,12 +138,12 @@ namespace PowerUsageApi.Controllers
                     var mlModel = new MLModel(modelData, GetPath(center));
                     mlModel.Train();
                 }
-                return Ok($"All center machine learning models trained using data spanning {StartDate} - {EndDate}");
+                return Ok($"All center machine learning models successfully trained.");
 
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return BadRequest(ex.InnerException.ToString());
             }
         }
 
@@ -159,7 +158,7 @@ namespace PowerUsageApi.Controllers
                     return BadRequest("3 character building abbreviation required i.e. BEV,CCK,TVO");
 
                 var ds = new DataService();
-                var center = ds.GetSetting(BldgId.Substring(0, 3).ToUpper());
+                var center = ds.GetCenterConfig(BldgId.Substring(0, 3).ToUpper());
 
                 if (center == null)
                     return BadRequest("Building not found");
@@ -181,13 +180,11 @@ namespace PowerUsageApi.Controllers
                         return BadRequest("Start date must be prior to end date");
                 }
 
-            
-
                 IEnumerable<EnergyUsage> modelData;
                 modelData = ds.GetTrainingData(center, StartDate, EndDate);
                 var mlModel = new MLModel(modelData, GetPath(center));
                 mlModel.Train();
-                return Ok($"{center.CenterAbbr} machine learning model trained using data spanning {StartDate} - {EndDate}");
+                return Ok($"{center.CenterAbbr} machine learning succesfully model trained.");
             }
             catch(Exception ex)
             {
@@ -201,7 +198,7 @@ namespace PowerUsageApi.Controllers
         public IHttpActionResult TrainNow(string BldgId)
         {
             var ds = new DataService();
-            var center = ds.GetSetting(BldgId.Substring(0, 3).ToUpper());
+            var center = ds.GetCenterConfig(BldgId.Substring(0, 3).ToUpper());
 
             if (center == null)
                 return BadRequest("Building not found");
@@ -228,6 +225,24 @@ namespace PowerUsageApi.Controllers
 
         }
 
+
+        [SwaggerImplementationNotes("Returns a summary of staged Iconics data for use in the prediction models.")]
+        [HttpGet]
+        [Route("api/EnergyUsage/DataSummary")]
+        public IHttpActionResult DataSummary()
+        {
+            var ds = new DataService();
+            try
+            {
+                return Ok(ds.GetDataSummary());
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+
+        }
+
         [SwaggerImplementationNotes("CAUTION Long operation: Will delete and refresh ALL staged data. This will take hours to complete. Parameters: None")]
         [HttpGet]
         [Route("api/EnergyUsage/RefreshData/All")]
@@ -235,7 +250,7 @@ namespace PowerUsageApi.Controllers
         {
             var repo = new HyperHistorianRepository();
             var ds = new DataService();
-            var centers = ds.GetAllSettings();
+            var centers = ds.GetAllCenterConfigs();
           
             foreach (var cen in centers)
             {
@@ -273,7 +288,7 @@ namespace PowerUsageApi.Controllers
         public IHttpActionResult RefreshDataForCenter(string BldgId)
         {
             var ds = new DataService();
-            var center = ds.GetSetting(BldgId.Substring(0, 3).ToUpper());
+            var center = ds.GetCenterConfig(BldgId.Substring(0, 3).ToUpper());
 
             if (center == null)
                 return BadRequest("Building not found");

@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace EnergyUsageMachine.Models
 {
-    [Table("ML_InocicsData")]
+    [Table("ML_IconicsData")]
     public class IconicsData
     {
         [Key]

@@ -7,6 +7,7 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using EnergyUsageMachine.ViewModels;
 
 namespace EnergyUsageMachine.Data
 {
@@ -107,6 +108,36 @@ namespace EnergyUsageMachine.Data
 
 
             return usage.AsEnumerable();
+        }
+
+        public DataSummary GetTrainingDataSummary(CenterConfig center)
+        {
+            var dsList = new List<DataSummary>();
+            var tempData = (ctx.IconicsData.Where(x => x.Fulltag.Contains("Temperature_F") && x.CenterAbbr == center.CenterAbbr).ToList());
+            var energyData = (ctx.IconicsData.Where(x => x.Fulltag.Contains("Peak_DEM") && x.CenterAbbr == center.CenterAbbr).ToList());
+
+            var merged = (from temp in tempData
+                          join energy in energyData
+                             on temp.TimeStamp equals energy.TimeStamp
+                          select new
+                          {
+                              Center = temp.CenterAbbr,
+                              Date = temp.TimeStamp,
+                          }).ToList();
+
+
+            var ds = new DataSummary()
+            {
+                Center = center.CenterAbbr,
+                MinDate = merged.Min(a => a.Date),
+                MaxDate = merged.Max(a => a.Date),
+                TempRecords = tempData.Count(),
+                kWHRecords = energyData.Count(),
+                JoinedCount = merged.Count()
+                    
+             };
+            return ds;
+           
         }
 
         public CenterConfig GetMLSetting(string Id)

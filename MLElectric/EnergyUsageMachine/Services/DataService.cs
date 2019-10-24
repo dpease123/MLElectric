@@ -1,6 +1,7 @@
 ﻿using EnergyUsageMachine.Data;
 using EnergyUsageMachine.Models;
 using EnergyUsageMachine.POCO;
+using EnergyUsageMachine.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,12 +14,12 @@ namespace EnergyUsageMachine.Services
     {
         HyperHistorianRepository hhr = new HyperHistorianRepository();
 
-        public CenterConfig GetSetting(string Id)
+        public CenterConfig GetCenterConfig(string Id)
         {
             return hhr.GetMLSetting(Id);
         }
 
-        public List<CenterConfig>GetAllSettings()
+        public List<CenterConfig>GetAllCenterConfigs()
         {
             return hhr.GetAllMLSettings();
         }
@@ -47,6 +48,17 @@ namespace EnergyUsageMachine.Services
         public DateTime GetMaxLoadDate(CenterConfig center)
         {
             return hhr.GetMaxLoadDate(center);
+        }
+
+        public List<DataSummary> GetDataSummary()
+        {
+            var centers = this.GetAllCenterConfigs();
+            var list = new List<DataSummary>();
+            foreach(var c in centers)
+            {
+                list.Add(hhr.GetTrainingDataSummary(c));
+            }
+            return list.OrderBy(x=> x.Center).ToList();
         }
     }
 }
