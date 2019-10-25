@@ -52,8 +52,10 @@ namespace PowerUsageApi.Controllers
 
                 trainedModel = mlContext.Model.Load(GetPath(center), out DataViewSchema modelSchema);
 
-                var usagePredictions = new Prediction(trainedModel, testObj, center);
-                return Ok(usagePredictions.PredictSingle());
+                var usagePrediction = new Prediction(trainedModel, testObj, center);
+                var p = usagePrediction.PredictSingle();
+                var evaluator = new Evaluate(mlContext, GetPath(center), p, center);
+                return Ok(evaluator.EvaluateModel());
             }
             catch (Exception ex)
             {
@@ -259,7 +261,7 @@ namespace PowerUsageApi.Controllers
 
         [SwaggerImplementationNotes("Returns metrics on staged Iconics data for use in the prediction models.")]
         [HttpGet]
-        [Route("api/EnergyUsage/GetDataSummary")]
+        [Route("api/EnergyUsage/GetDataOverview")]
         public IHttpActionResult DataSummary()
         {
             var ds = new DataService();

@@ -15,5 +15,9 @@ namespace EnergyUsageMachine.POCO
         public float kWH_Usage { get; set; }
         [XmlElement("HourOfDay")]
         public int Hour { get; set; }
+
+        public string RSquaredScore { get; set; }
+
+        public string RootMeanSquaredError { get; set; }
     }
 }

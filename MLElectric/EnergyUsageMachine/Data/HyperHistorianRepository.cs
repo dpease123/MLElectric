@@ -129,11 +129,11 @@ namespace EnergyUsageMachine.Data
             var ds = new MLModelDataSummary()
             {
                 Center = center.CenterAbbr,
-                DataStartDate = merged.Min(a => a.Date),
-                DataEndDate = merged.Max(a => a.Date),
-                TemperatureRecordCount = tempData.Count(),
-                DemandRecordCount = energyData.Count(),
-                JoinedCount = merged.Count()
+                DataStartDate = merged.Min(a => a.Date).ToString(),
+                DataEndDate = merged.Max(a => a.Date).ToString(),
+                TemperatureRecordCount = String.Format("{0:#,##0}", tempData.Count()),
+                DemandRecordCount = String.Format("{0:#,##0}", energyData.Count()),
+                JoinedCount = String.Format("{0:#,##0}", merged.Count())
                     
              };
             return ds;

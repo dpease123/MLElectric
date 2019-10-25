@@ -47,7 +47,7 @@ namespace EnergyUsageMachine.Services
 
         public DateTime GetMaxLoadDate(CenterConfig center)
         {
-            return hhr.GetTrainingDataSummary(center).DataEndDate;
+            return DateTime.Parse(hhr.GetTrainingDataSummary(center).DataEndDate);
         }
 
         public List<MLModelDataSummary> GetDataSummary()
