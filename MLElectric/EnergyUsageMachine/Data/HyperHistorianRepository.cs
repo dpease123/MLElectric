@@ -110,9 +110,9 @@ namespace EnergyUsageMachine.Data
             return usage.AsEnumerable();
         }
 
-        public DataSummary GetTrainingDataSummary(CenterConfig center)
+        public MLModelDataSummary GetTrainingDataSummary(CenterConfig center)
         {
-            var dsList = new List<DataSummary>();
+            var dsList = new List<MLModelDataSummary>();
             var tempData = (ctx.IconicsData.Where(x => x.Fulltag.Contains("Temperature_F") && x.CenterAbbr == center.CenterAbbr).ToList());
             var energyData = (ctx.IconicsData.Where(x => x.Fulltag.Contains("Peak_DEM") && x.CenterAbbr == center.CenterAbbr).ToList());
 
@@ -126,13 +126,13 @@ namespace EnergyUsageMachine.Data
                           }).ToList();
 
 
-            var ds = new DataSummary()
+            var ds = new MLModelDataSummary()
             {
                 Center = center.CenterAbbr,
-                MinDate = merged.Min(a => a.Date),
-                MaxDate = merged.Max(a => a.Date),
-                TempRecords = tempData.Count(),
-                kWHRecords = energyData.Count(),
+                DataStartDate = merged.Min(a => a.Date),
+                DataEndDate = merged.Max(a => a.Date),
+                TemperatureRecordCount = tempData.Count(),
+                DemandRecordCount = energyData.Count(),
                 JoinedCount = merged.Count()
                     
              };
@@ -150,7 +150,7 @@ namespace EnergyUsageMachine.Data
             return ctx.CenterConfig.ToList();
         }
 
-        public CenterConfig UpdateSetting(CenterConfig m)
+        public CenterConfig UpdateConfig(CenterConfig m)
         {
             var row = ctx.CenterConfig.Find(m.CenterAbbr);
             row.DateLastRecord = DateTime.Now;

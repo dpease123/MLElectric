@@ -6,13 +6,13 @@ using System.Threading.Tasks;
 
 namespace EnergyUsageMachine.ViewModels
 {
-    public class DataSummary
+    public class MLModelDataSummary
     {
-       public DateTime MinDate { get; set; }
-        public DateTime MaxDate { get; set; }
+        public DateTime DataStartDate { get; set; }
+        public DateTime DataEndDate { get; set; }
         public string Center { get; set; }
         public int JoinedCount { get; set; }
-        public int TempRecords { get; set; }
-        public int kWHRecords { get; set; }
+        public int TemperatureRecordCount { get; set; }
+        public int DemandRecordCount { get; set; }
     }
 }

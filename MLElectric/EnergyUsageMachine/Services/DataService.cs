@@ -40,20 +40,20 @@ namespace EnergyUsageMachine.Services
             return hhr.DeleteCenterData(BldgId);
         }
 
-        public CenterConfig UpdateSetting(CenterConfig m)
+        public CenterConfig UpdateCenterConfig(CenterConfig m)
         {
-            return hhr.UpdateSetting(m);
+            return hhr.UpdateConfig(m);
         }
 
         public DateTime GetMaxLoadDate(CenterConfig center)
         {
-            return hhr.GetTrainingDataSummary(center).MaxDate; ;
+            return hhr.GetTrainingDataSummary(center).DataEndDate;
         }
 
-        public List<DataSummary> GetDataSummary()
+        public List<MLModelDataSummary> GetDataSummary()
         {
             var centers = this.GetAllCenterConfigs();
-            var list = new List<DataSummary>();
+            var list = new List<MLModelDataSummary>();
             foreach(var c in centers)
             {
                 list.Add(hhr.GetTrainingDataSummary(c));
