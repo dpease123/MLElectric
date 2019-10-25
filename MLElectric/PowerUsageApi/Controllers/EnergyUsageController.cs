@@ -12,6 +12,7 @@ using System;
 using System.Web.Configuration;
 using EnergyUsageMachine.Data;
 using EnergyUsageMachine.ViewModels;
+using System.Linq;
 
 namespace PowerUsageApi.Controllers
 {
@@ -53,9 +54,12 @@ namespace PowerUsageApi.Controllers
                 trainedModel = mlContext.Model.Load(GetPath(center), out DataViewSchema modelSchema);
 
                 var usagePrediction = new Prediction(trainedModel, testObj, center);
-                var p = usagePrediction.PredictSingle();
-                var evaluator = new Evaluate(mlContext, GetPath(center), p, center);
-                return Ok(evaluator.EvaluateModel());
+                var predictions = usagePrediction.PredictSingle();
+                var evaluator = new Evaluate(mlContext, GetPath(center), center).EvaluateModel();
+                predictions.RSquaredScore = evaluator.RSquaredScore;
+                predictions.RootMeanSquaredError = evaluator.RootMeanSquaredError;
+
+                return Ok(predictions);
             }
             catch (Exception ex)
             {
@@ -265,13 +269,21 @@ namespace PowerUsageApi.Controllers
         public IHttpActionResult DataSummary()
         {
             var ds = new DataService();
+            var mlContext = new MLContext();
             try
             {
-                return Ok(ds.GetDataSummary());
+                var centers = ds.GetAllCenterConfigs();
+                var list = new List<MLModelDataSummary>();
+                foreach (var c in centers)
+                {
+                    list.Add(ds.GetDataSummary(mlContext, GetPath(c), c));
+                }
+
+                return Ok(list.OrderBy(x => x.Center).ToList());
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return BadRequest(ex.InnerException.ToString());
             }
 
         }

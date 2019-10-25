@@ -124,6 +124,7 @@
     <Compile Include="Models\IconicsData.cs" />
     <Compile Include="Models\CenterConfig.cs" />
     <Compile Include="POCO\EnergyUsage.cs" />
+    <Compile Include="POCO\EvaluateModel.cs" />
     <Compile Include="POCO\Forecast.cs" />
     <Compile Include="POCO\ForecastURLs.cs" />
     <Compile Include="POCO\Period.cs" />

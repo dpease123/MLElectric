@@ -2,6 +2,7 @@
 using EnergyUsageMachine.Models;
 using EnergyUsageMachine.POCO;
 using EnergyUsageMachine.ViewModels;
+using Microsoft.ML;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -50,15 +51,14 @@ namespace EnergyUsageMachine.Services
             return DateTime.Parse(hhr.GetTrainingDataSummary(center).DataEndDate);
         }
 
-        public List<MLModelDataSummary> GetDataSummary()
+        public MLModelDataSummary GetDataSummary(MLContext ctx, string modelPath, CenterConfig center)
         {
-            var centers = this.GetAllCenterConfigs();
-            var list = new List<MLModelDataSummary>();
-            foreach(var c in centers)
-            {
-                list.Add(hhr.GetTrainingDataSummary(c));
-            }
-            return list.OrderBy(x=> x.Center).ToList();
-        }
+            var eval = new Evaluate(ctx, modelPath,  center);
+            var summary = hhr.GetTrainingDataSummary(center);
+            summary.EvalModel = new Evaluate(ctx, modelPath, center).EvaluateModel();
+            return summary;
+         }
+            
+        
     }
 }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using EnergyUsageMachine.POCO;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,5 +15,6 @@ namespace EnergyUsageMachine.ViewModels
         public string JoinedCount { get; set; }
         public string TemperatureRecordCount { get; set; }
         public string DemandRecordCount { get; set; }
+        public EvaluateModel EvaluateModel {get; set;}
     }
 }

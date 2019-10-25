@@ -14,17 +14,15 @@ namespace EnergyUsageMachine
         private readonly MLContext _MLContext;
         public readonly string _modelPath;
         private readonly CenterConfig _centerConfig;
-        private readonly Predictions _prediction;
-        public Evaluate(MLContext mlContext, string modelPath, Predictions prediction, CenterConfig center)
+        public Evaluate(MLContext mlContext, string modelPath, CenterConfig center)
         {
             //_model = model;
             _MLContext = mlContext;
             _centerConfig = center;
             _modelPath = modelPath;
-            _prediction = prediction;
         }
 
-        public Predictions EvaluateModel()
+        public EvaluateModel EvaluateModel()
         {
             var ds = new DataService();
             var data = ds.GetTrainingData(_centerConfig, "01/01/2017", DateTime.Now.ToString());
@@ -47,11 +45,13 @@ namespace EnergyUsageMachine
             does not improve prediction over the mean model, and one indicating perfect prediction. Improvement in the 
             regression model results in proportional increases in R-squared.*/
 
-            _prediction.Center = _centerConfig.CenterAbbr;
-            _prediction.RSquaredScore = ($"RSquared: The closer its value is to 1, the better the model is: {metrics.RSquared: 0.##}");
-            _prediction.RootMeanSquaredError = ($"RMSE: The lower it is, the better the model is: {metrics.RootMeanSquaredError: #.##}");
-            return _prediction;
-
+            return new EvaluateModel()
+            {
+                RSquaredScore = ($"{metrics.RSquared: 0.##}"),
+                RootMeanSquaredError = ($"{metrics.RootMeanSquaredError: #.##}")
+            };
         }
     }
 }
+          
+   
