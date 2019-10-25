@@ -56,7 +56,7 @@ namespace PowerUsageApi.Controllers
                 var usagePrediction = new Prediction(trainedModel, testObj, center);
                 var predictions = usagePrediction.PredictSingle();
                 var eval = new Evaluate(mlContext, GetPath(center), center).EvaluateModel();
-                predictions.EvaluateModel = eval;
+                predictions.ModelQuality = eval;
                 predictions.Center = center.CenterAbbr;
 
                 return Ok(predictions);

@@ -45,12 +45,31 @@ namespace EnergyUsageMachine
             does not improve prediction over the mean model, and one indicating perfect prediction. Improvement in the 
             regression model results in proportional increases in R-squared.*/
 
-            return new EvaluateModel()
+
+            var ev = new EvaluateModel()
             {
                 RSquaredScore = ($"{metrics.RSquared: 0.##}"),
-                RootMeanSquaredError = ($"{metrics.RootMeanSquaredError: #.##}")
+                RootMeanSquaredError = ($"{metrics.RootMeanSquaredError: #.##}"),
+                Mood = "Unkwown"
             };
+            ev.Mood = GetMood(ev.RSquaredScore);
+            return ev;
         }
+
+        private string GetMood(string score)
+        {
+            var x = double.Parse(score);
+            string mood = "Unkown";
+            if (x > .71)
+                mood = ";-)";
+            if (x > .41 && x < .7)
+                mood = ";-|";
+            if (x < .4)
+                mood = ";-(";
+            return mood;
+
+        }
+
     }
 }
           

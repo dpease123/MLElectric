@@ -9,8 +9,14 @@ namespace EnergyUsageMachine.POCO
     public class EvaluateModel
     {
         public string RSquaredScore { get; set; }
-        
+
         public string RootMeanSquaredError { get; set; }
+
+        public string Mood { get; set; }
+
        
     }
+
+   
+        
 }

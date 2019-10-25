@@ -15,6 +15,6 @@ namespace EnergyUsageMachine.ViewModels
         public string JoinedCount { get; set; }
         public string TemperatureRecordCount { get; set; }
         public string DemandRecordCount { get; set; }
-        public EvaluateModel EvaluateModel {get; set;}
+        public EvaluateModel ModelQuality {get; set;}
     }
 }
