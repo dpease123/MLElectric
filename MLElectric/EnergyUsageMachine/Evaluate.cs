@@ -50,23 +50,27 @@ namespace EnergyUsageMachine
             {
                 RSquaredScore = ($"{metrics.RSquared: 0.##}"),
                 RootMeanSquaredError = ($"{metrics.RootMeanSquaredError: #.##}"),
-                Mood = "Unkwown"
+                Grade = string.Empty
             };
-            ev.Mood = GetMood(ev.RSquaredScore);
+            ev.Grade = GradeModel(ev.RSquaredScore);
             return ev;
         }
 
-        private string GetMood(string score)
+        private string GradeModel(string score)
         {
             var x = double.Parse(score);
-            string mood = "Unkown";
-            if (x >= .69)
-                mood = ";-)";
-            if (x >= .39 && x <= .68)
-                mood = ";-|";
-            if (x <= .38)
-                mood = ";-(";
-            return mood;
+            string grade = "Unkown";
+            if (x >= .81)
+                grade = "A";
+            if (x >= .61 && x <= .80)
+                grade = "B";
+            if (x >= .41 && x <= .60)
+                grade = "C";
+            if (x >= .21 && x <= .40)
+                grade = "D";
+            if (x <= .20)
+                grade = "F";
+            return grade;
 
         }
 

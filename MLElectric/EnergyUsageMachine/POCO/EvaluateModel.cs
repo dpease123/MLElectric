@@ -12,7 +12,7 @@ namespace EnergyUsageMachine.POCO
 
         public string RootMeanSquaredError { get; set; }
 
-        public string Mood { get; set; }
+        public string Grade { get; set; }
 
        
     }
