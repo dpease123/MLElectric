@@ -60,11 +60,11 @@ namespace EnergyUsageMachine
         {
             var x = double.Parse(score);
             string mood = "Unkown";
-            if (x > .71)
+            if (x >= .69)
                 mood = ";-)";
-            if (x > .41 && x < .7)
+            if (x >= .39 && x <= .68)
                 mood = ";-|";
-            if (x < .4)
+            if (x <= .38)
                 mood = ";-(";
             return mood;
 
