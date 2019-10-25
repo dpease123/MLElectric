@@ -19,5 +19,6 @@ namespace EnergyUsageMachine.POCO
         public string RSquaredScore { get; set; }
 
         public string RootMeanSquaredError { get; set; }
+        public string Center { get; set; }
     }
 }
