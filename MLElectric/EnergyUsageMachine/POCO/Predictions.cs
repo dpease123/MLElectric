@@ -19,9 +19,7 @@ namespace EnergyUsageMachine.POCO
         [XmlElement("HourOfDay")]
         public int Hour { get; set; }
         [DataMember]
-        public string RSquaredScore { get; set; }
-        [DataMember]
-        public string RootMeanSquaredError { get; set; }
+        public EvaluateModel ModelQuality { get; set; }
         [DataMember]
         public string Center { get; set; }
     }

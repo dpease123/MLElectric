@@ -55,7 +55,7 @@ namespace EnergyUsageMachine.Services
         {
             var eval = new Evaluate(ctx, modelPath,  center);
             var summary = hhr.GetTrainingDataSummary(center);
-            summary.EvalModel = new Evaluate(ctx, modelPath, center).EvaluateModel();
+            summary.EvaluateModel = new Evaluate(ctx, modelPath, center).EvaluateModel();
             return summary;
          }
             
