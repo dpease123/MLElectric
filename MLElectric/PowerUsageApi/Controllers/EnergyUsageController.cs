@@ -199,7 +199,7 @@ namespace PowerUsageApi.Controllers
         //    }
         //}
 
-        [SwaggerImplementationNotes("Load and train the machine learning model for a center appending the latest data to the model. Parameters: BldgId: BEV,UTC,CCK")]
+        [SwaggerImplementationNotes("Load and train the machine learning model for a center appending the latest Iconics data to the model. Parameters: BldgId: BEV,UTC,CCK")]
         [HttpGet]
         [Route("api/EnergyUsage/Train/NewData/{BldgId}")]
         public IHttpActionResult TrainNow(string BldgId)
@@ -231,7 +231,7 @@ namespace PowerUsageApi.Controllers
 
         }
 
-        [SwaggerImplementationNotes("Load and train the machine learning model for all centers appending the latest data to the model. Parameters: None")]
+        [SwaggerImplementationNotes("Load and train the machine learning model for all centers appending the latest Iconics data to each model. Parameters: None")]
         [HttpGet]
         [Route("api/EnergyUsage/Train/NewData/All")]
         public IHttpActionResult TrainAllNow()
@@ -264,9 +264,9 @@ namespace PowerUsageApi.Controllers
 
         }
 
-        [SwaggerImplementationNotes("Returns metrics on staged Iconics data for use in the prediction models.")]
+        [SwaggerImplementationNotes("Returns a summary of the Iconics data loaded for use in the enrgy prediction models.")]
         [HttpGet]
-        [Route("api/EnergyUsage/GetDataOverview")]
+        [Route("api/EnergyUsage/IconicsData/SummaryReport")]
         public IHttpActionResult DataSummary()
         {
             var ds = new DataService();
@@ -289,10 +289,10 @@ namespace PowerUsageApi.Controllers
 
         }
 
-        [SwaggerImplementationNotes("CAUTION Long operation: Will delete and refresh ALL staged data. This will take hours to complete. Parameters: None")]
+        [SwaggerImplementationNotes("CAUTION: Will delete then reload Iconics data for each center. Parameters: None")]
         [HttpGet]
-        [Route("api/EnergyUsage/RefreshData/All")]
-        public IHttpActionResult ReloadAllData()
+        [Route("api/EnergyUsage/IconicsData/All")]
+        public IHttpActionResult IconicsAllCenters()
         {
             return Ok("Please contact IT to have all center data reloaded from Iconics.");
 
@@ -351,10 +351,10 @@ namespace PowerUsageApi.Controllers
 
         }
 
-        [SwaggerImplementationNotes("CAUTION Long Operation: Will delete, refresh staged data and train the model for center provided. Parameters: BldgId: BEV,UTC,CCK")]
+        [SwaggerImplementationNotes("CAUTION: Will delete then reload Iconics data for center provided. Parameters: BldgId: BEV,UTC,CCK")]
         [HttpGet]
-        [Route("api/EnergyUsage/RefreshData/{BldgId}")]
-        public IHttpActionResult RefreshDataForCenter(string BldgId)
+        [Route("api/EnergyUsage/IconicsData/{BldgId}")]
+        public IHttpActionResult IconicsDataForCenter(string BldgId)
         {
             
             var ds = new DataService();
