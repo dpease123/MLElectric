@@ -13,6 +13,7 @@ using System.Web.Configuration;
 using EnergyUsageMachine.Data;
 using EnergyUsageMachine.ViewModels;
 using System.Linq;
+using System.Text;
 
 namespace PowerUsageApi.Controllers
 {
@@ -24,8 +25,8 @@ namespace PowerUsageApi.Controllers
             "06/01/2017, 12/31/2017",
             "01/01/2018, 05/30/2018",
             "06/01/2018, 12/31/2018",
-            "01/01/2019, 04/23/2019",
-            "05/015/2019, " + DateTime.Now.ToShortDateString()
+            "01/01/2019, 05/30/2019",
+            "06/01/2019, " + DateTime.Now.ToShortDateString()
         };
 
         [SwaggerImplementationNotes("Returns a single energy usage prediction for testing purposes.")]
@@ -288,45 +289,65 @@ namespace PowerUsageApi.Controllers
 
         }
 
-        //[SwaggerImplementationNotes("CAUTION Long operation: Will delete and refresh ALL staged data. This will take hours to complete. Parameters: None")]
-        //[HttpGet]
-        //[Route("api/EnergyUsage/RefreshData/All")]
-        //public IHttpActionResult RefreshAllData()
-        //{
-        //    var repo = new HyperHistorianRepository();
-        //    var ds = new DataService();
-        //    var centers = ds.GetAllCenterConfigs();
-          
-        //    foreach (var center in centers)
-        //    {
-        //        try
-        //        {
-        //            ds.DeleteCenterData(center.CenterAbbr);
+        [SwaggerImplementationNotes("CAUTION Long operation: Will delete and refresh ALL staged data. This will take hours to complete. Parameters: None")]
+        [HttpGet]
+        [Route("api/EnergyUsage/RefreshData/All")]
+        public IHttpActionResult RefreshAllData()
+        {
+            var ds = new DataService();
+            var centers = ds.GetAllCenterConfigs();
+            var mlContext = new MLContext();
+            var errorsList = new List<string>();
 
-        //            foreach (var d in LoadDates)
-        //            {
-        //                var a = d.Split(',')[0];
-        //                var z = d.Split(',')[1];
-        //                ds.StageTrainingData(center, a, z);
-        //            }
+            foreach (var center in centers)
+            {
+                try
+                {
+                    ds.DeleteCenterData(center.CenterAbbr);
 
-        //            IEnumerable<EnergyUsage> modelData;
-        //            modelData = ds.GetTrainingData(center, WebConfigurationManager.AppSettings["MLDataStartDate"], DateTime.Now.ToShortDateString());
-        //            ds.UpdateCenterConfig(center);
-        //            var mlModel = new MLModel(modelData, GetPath(center));
-        //            mlModel.Train();
-        //        }
-            
-        //        catch (Exception ex)
-        //        {
-        //            continue;
-        //        }
+                    foreach (var d in LoadDates)
+                    {
+                        var a = d.Split(',')[0];
+                        var z = d.Split(',')[1];
+                        ds.StageTrainingData(center, a, z);
+                    }
 
-        //    }
+                    IEnumerable<EnergyUsage> modelData;
+                    modelData = ds.GetTrainingData(center, WebConfigurationManager.AppSettings["MLDataStartDate"], DateTime.Now.ToShortDateString());
+                    ds.UpdateCenterConfig(center);
+                    var mlModel = new MLModel(modelData, GetPath(center));
+                    mlModel.Train();
 
-        //    return Ok($"All data refreshed.");
+                    //var sum = ds.GetDataSummary(mlContext, GetPath(center), center);
+                    //center.DataStartDate = DateTime.Parse("01/01/2017");
+                    //center.DataEndDate = DateTime.Parse(sum.DataEndDate);
+                    //center.DemandRecordCount = int.Parse(sum.DemandRecordCount);
+                    //center.JoinedRecordCount = int.Parse(sum.JoinedCount);
+                    //center.TemperatureRecordCount = int.Parse(sum.TemperatureRecordCount);
+                    //center.RootMeanSquaredError = decimal.Parse(sum.ModelQuality.RootMeanSquaredError);
+                    //center.RSquaredScore = decimal.Parse(sum.ModelQuality.RSquaredScore);
+                    //center.ModelGrade = sum.ModelQuality.Grade;
+                    //ds.UpdateCenterConfig(center);
 
-        //}
+                }
+
+                catch (Exception ex)
+                {
+                    var msg = new StringBuilder();
+                    msg.Append($"{center} - Message: { ex.Message}");
+                    if (ex.InnerException != null)
+                        msg.Append($"Inner Ex: { ex.InnerException.ToString()}");
+                    errorsList.Add(msg.ToString());
+                    continue;
+                }
+
+            }
+            if (errorsList.Any())
+                return Ok(errorsList);
+
+            return Ok($"All data refreshed.");
+
+        }
 
         //[SwaggerImplementationNotes("CAUTION Long Operation: Will delete, refresh staged data and train the model for center provided. Parameters: BldgId: BEV,UTC,CCK")]
         //[HttpGet]
@@ -341,7 +362,7 @@ namespace PowerUsageApi.Controllers
         //    var dataList = new List<EnergyUsage>();
 
         //    ds.DeleteCenterData(center.CenterAbbr);
-           
+
         //    try
         //    {
         //        foreach (var d in LoadDates)

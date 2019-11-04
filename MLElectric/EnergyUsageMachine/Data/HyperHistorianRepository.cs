@@ -27,7 +27,7 @@ namespace EnergyUsageMachine.Data
             };
 
             return ctx.Database.SqlQuery<CenterTemp_History>(
-                   "exec [dbo].[sp_GetAggregatesForTimeRangeForLevel_Dev] @regionName, @mallName, @startTime, @endTime, @tagName, @CenterAbbr",
+                   "exec [dbo].[sp_GetAggregatesForTimeRangeForLevel_Dev] @regionName, @mallName, @startTime, @endTime, @CenterAbbr,  @tagName",
                     xparams).ToList();
         }
 
@@ -43,7 +43,7 @@ namespace EnergyUsageMachine.Data
             };
 
             return ctx.Database.SqlQuery<CenterkWhUsage_History>(
-                    "exec [dbo].[sp_GetAggregatesForTimeRangeForLevel_Dev] @regionName, @mallName, @startTime, @endTime, @tagName, @CenterAbbr",
+                    "exec [dbo].[sp_GetAggregatesForTimeRangeForLevel_Dev] @regionName, @mallName, @startTime, @endTime, @CenterAbbr,  @tagName",
                     xparams).ToList();
 
         }
@@ -153,7 +153,7 @@ namespace EnergyUsageMachine.Data
         public CenterConfig UpdateConfig(CenterConfig m)
         {
             var row = ctx.CenterConfig.Find(m.CenterAbbr);
-            row.DateLastRecord = DateTime.Now;
+            row.DateUpdated = DateTime.Now;
             ctx.SaveChanges();
 
             return row;

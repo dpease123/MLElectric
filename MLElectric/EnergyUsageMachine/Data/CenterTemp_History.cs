@@ -8,11 +8,11 @@ namespace EnergyUsageMachine.Data
 {
     public class CenterTemp_History
     {
-        public string Tag { get; set; }
-        public DateTime CurrentTimeStamp { get; set; }
-        public float CurrentAvgValue { get; set; }
-
+        public string FullTag { get; set; }
         public string CenterAbbr { get; set; }
+        public DateTime TimeStamp { get; set; }
+        public float AvgValue { get; set; }
+        public Guid BatchId { get; set; }
 
 
     }

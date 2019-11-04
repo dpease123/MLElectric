@@ -1,4 +1,5 @@
-﻿using System;
+﻿using EnergyUsageMachine.POCO;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -16,6 +17,22 @@ namespace EnergyUsageMachine.Models
         public string Region { get; set; }
         public string CenterName { get; set; }
         public string WeatherURL { get; set; }
-        public DateTime? DateLastRecord { get; set; }
+        public DateTime? DataStartDate { get; set; }
+        public DateTime? DataEndDate { get; set; }
+        public int? TemperatureRecordCount { get; set; }
+
+        public int? DemandRecordCount { get; set; }
+
+        public int? JoinedRecordCount { get; set; }
+
+        public decimal? RSquaredScore { get; set; }
+
+        public decimal? RootMeanSquaredError { get; set; }
+
+        public string ModelGrade { get; set; }
+
+        public DateTime? DateUpdated { get; set; }
+
+        public IEnumerable<EnergyUsage> EnergyUSage {get; set;}
     }
 }
