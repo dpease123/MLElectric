@@ -292,8 +292,10 @@ namespace PowerUsageApi.Controllers
         [SwaggerImplementationNotes("CAUTION Long operation: Will delete and refresh ALL staged data. This will take hours to complete. Parameters: None")]
         [HttpGet]
         [Route("api/EnergyUsage/RefreshData/All")]
-        public IHttpActionResult RefreshAllData()
+        public IHttpActionResult ReloadAllData()
         {
+            return Ok("Please contact IT to have all center data reloaded from Iconics.");
+
             var ds = new DataService();
             var centers = ds.GetAllCenterConfigs();
             var mlContext = new MLContext();
@@ -349,44 +351,46 @@ namespace PowerUsageApi.Controllers
 
         }
 
-        //[SwaggerImplementationNotes("CAUTION Long Operation: Will delete, refresh staged data and train the model for center provided. Parameters: BldgId: BEV,UTC,CCK")]
-        //[HttpGet]
-        //[Route("api/EnergyUsage/RefreshData/{BldgId}")]
-        //public IHttpActionResult RefreshDataForCenter(string BldgId)
-        //{
-        //    var ds = new DataService();
-        //    var center = ds.GetCenterConfig(BldgId.Substring(0, 3).ToUpper());
+        [SwaggerImplementationNotes("CAUTION Long Operation: Will delete, refresh staged data and train the model for center provided. Parameters: BldgId: BEV,UTC,CCK")]
+        [HttpGet]
+        [Route("api/EnergyUsage/RefreshData/{BldgId}")]
+        public IHttpActionResult RefreshDataForCenter(string BldgId)
+        {
+            
+            var ds = new DataService();
+            var center = ds.GetCenterConfig(BldgId.Substring(0, 3).ToUpper());
 
-        //    if (center == null)
-        //        return BadRequest("Building not found");
-        //    var dataList = new List<EnergyUsage>();
+            if (center == null)
+                return BadRequest("Building not found");
+            return Ok($"Please contact IT to have {BldgId} center data reloaded from Iconics.");
+            var dataList = new List<EnergyUsage>();
 
-        //    ds.DeleteCenterData(center.CenterAbbr);
+            ds.DeleteCenterData(center.CenterAbbr);
 
-        //    try
-        //    {
-        //        foreach (var d in LoadDates)
-        //        {
-        //            var a = d.Split(',')[0];
-        //            var z = d.Split(',')[1];
-        //            ds.StageTrainingData(center, a, z);
-        //        };
+            try
+            {
+                foreach (var d in LoadDates)
+                {
+                    var a = d.Split(',')[0];
+                    var z = d.Split(',')[1];
+                    ds.StageTrainingData(center, a, z);
+                };
 
-        //        IEnumerable<EnergyUsage> modelData;
-        //        modelData = ds.GetTrainingData(center, WebConfigurationManager.AppSettings["MLDataStartDate"], DateTime.Now.ToShortDateString());
-        //        center = ds.UpdateCenterConfig(center);
-        //        var mlModel = new MLModel(modelData, GetPath(center));
-        //        mlModel.Train();
+                IEnumerable<EnergyUsage> modelData;
+                modelData = ds.GetTrainingData(center, WebConfigurationManager.AppSettings["MLDataStartDate"], DateTime.Now.ToShortDateString());
+                center = ds.UpdateCenterConfig(center);
+                var mlModel = new MLModel(modelData, GetPath(center));
+                mlModel.Train();
 
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return BadRequest(ex.Message);
-        //    }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
 
-        //    return Ok($"Data refreshed for {center.CenterAbbr}");
+            return Ok($"Data refreshed for {center.CenterAbbr}");
 
-        //}
+        }
 
         private bool IsValidDate(string date)
         {
