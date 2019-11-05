@@ -22,5 +22,8 @@ namespace EnergyUsageMachine.POCO
         public EvaluateModel ModelQuality { get; set; }
         [DataMember]
         public string Center { get; set; }
+
+        [DataMember]
+        public string RegressionTrainer { get; set; }
     }
 }

@@ -69,6 +69,85 @@ namespace PowerUsageApi.Controllers
 
         }
 
+        [SwaggerImplementationNotes("Best model contest...")]
+        [HttpPost]
+        [Route("api/EnergyUsage/Predict/BestModel")]
+        public IHttpActionResult BestModel(MLTestObject testObj)
+        {
+            List<Monkey> trainedModels = new List<Monkey>();
+            
+            if (string.IsNullOrEmpty(testObj.CenterAbbr))
+                return BadRequest("3 character building abbreviation required");
+
+            var ds = new DataService();
+            var center = ds.GetCenterConfig((testObj.CenterAbbr.Substring(0, 3).ToUpper()));
+
+            if (center == null)
+                return BadRequest("Building not found");
+
+            var a = WebConfigurationManager.AppSettings["MLDataStartDate"];
+            var z = DateTime.Now.ToString();
+
+            try
+            {
+                var mlContext = new MLContext();
+                var modelData = ds.GetTrainingData(center, a, z);
+
+                var m = new Monkey()
+                {
+                    TypeName = "FastTree",
+                    TrainedModel = new MLModel(modelData, GetPath2(center, "FastTree")).FastTree()
+                };
+                trainedModels.Add(m);
+
+                m = new Monkey()
+                {
+                    TypeName = "FastTreeTweedie",
+                    TrainedModel = new MLModel(modelData, GetPath2(center, "FastTreeTweedie")).FastTreeTweedie()
+                };
+                trainedModels.Add(m);
+
+                m = new Monkey()
+                {
+                TypeName = "FastForest",
+                TrainedModel = new MLModel(modelData, GetPath2(center, "FastForest")).FastForest()
+                };
+                trainedModels.Add(m);
+
+                m = new Monkey()
+                {
+                TypeName = "PoissonRegression",
+                TrainedModel = new MLModel(modelData, GetPath2(center, "PoissonRegression")).PoissonRegression()
+                };
+                trainedModels.Add(m);
+                m = new Monkey()
+                {
+                TypeName = "OnlineGradientDescent",
+                TrainedModel = new MLModel(modelData, GetPath2(center, "OnlineGradientDescent")).OnlineGradientDescent()
+                };
+                trainedModels.Add(m);
+
+
+                var predictionsList = new List<Predictions>();
+                foreach(var tm in trainedModels)
+                {
+                    var usagePrediction = new Prediction(tm.TrainedModel, testObj, center);
+                    var predictions = usagePrediction.PredictSingle();
+                    var eval = new Evaluate(mlContext, GetPath2(center, tm.TypeName), center).EvaluateModel();
+                    predictions.ModelQuality = eval;
+                    predictions.Center = center.CenterAbbr;
+                    predictions.RegressionTrainer = tm.TypeName;
+                    predictionsList.Add(predictions);
+                }
+                return Ok(predictionsList.OrderBy(x => x.ModelQuality.RSquaredScore));
+}
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+
+        }
+
         [SwaggerImplementationNotes("Returns the predicted next 24hrs. of energy usage for a building. Parameters: BldgId= BEV,UTC,CCK")]
         [HttpGet]
         [Route("api/EnergyUsage/Predict/{BldgId}")]
@@ -219,7 +298,7 @@ namespace PowerUsageApi.Controllers
                 ds.StageTrainingData(center, a.ToString(), z.ToString());
                 modelData = ds.GetTrainingData(center, WebConfigurationManager.AppSettings["MLDataStartDate"], z);
                 var mlModel = new MLModel(modelData, GetPath(center));
-                mlModel.Train();
+                mlModel.FastTree();
              
             }
             catch (Exception ex)
@@ -250,7 +329,7 @@ namespace PowerUsageApi.Controllers
                     ds.StageTrainingData(center, a.ToString(), z);
                     modelData = ds.GetTrainingData(center, WebConfigurationManager.AppSettings["MLDataStartDate"],z);
                     var mlModel = new MLModel(modelData, GetPath(center));
-                    mlModel.Train();
+                    mlModel.FastTree();
 
                 }
                 catch (Exception ex)
@@ -318,7 +397,7 @@ namespace PowerUsageApi.Controllers
                     modelData = ds.GetTrainingData(center, WebConfigurationManager.AppSettings["MLDataStartDate"], DateTime.Now.ToShortDateString());
                     ds.UpdateCenterConfig(center);
                     var mlModel = new MLModel(modelData, GetPath(center));
-                    mlModel.Train();
+                    mlModel.FastTree();
 
                     //var sum = ds.GetDataSummary(mlContext, GetPath(center), center);
                     //center.DataStartDate = DateTime.Parse("01/01/2017");
@@ -380,7 +459,7 @@ namespace PowerUsageApi.Controllers
                 modelData = ds.GetTrainingData(center, WebConfigurationManager.AppSettings["MLDataStartDate"], DateTime.Now.ToShortDateString());
                 center = ds.UpdateCenterConfig(center);
                 var mlModel = new MLModel(modelData, GetPath(center));
-                mlModel.Train();
+                mlModel.FastTree();
 
             }
             catch (Exception ex)
@@ -402,5 +481,19 @@ namespace PowerUsageApi.Controllers
         {
             return Path.Combine(WebConfigurationManager.AppSettings["MLModelPath"], "Model_" + center.CenterAbbr.ToUpper() + ".zip");
         }
+
+        private static string GetPath2(EnergyUsageMachine.Models.CenterConfig center, string trainer)
+        {
+            return Path.Combine(WebConfigurationManager.AppSettings["MLModelPath"], "Model_" + center.CenterAbbr.ToUpper() +"_"+ trainer + ".zip");
+        }
+
     }
+
+public class Monkey
+{
+    public string TypeName { get; set; }
+    public ITransformer TrainedModel { get; set; }
 }
+    
+}
+
