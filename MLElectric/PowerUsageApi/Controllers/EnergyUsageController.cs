@@ -139,7 +139,7 @@ namespace PowerUsageApi.Controllers
                     predictions.RegressionTrainer = tm.TypeName;
                     predictionsList.Add(predictions);
                 }
-                return Ok(predictionsList.OrderBy(x => x.ModelQuality.RSquaredScore));
+                return Ok(predictionsList.OrderByDescending(x => x.ModelQuality.RSquaredScore));
 }
             catch (Exception ex)
             {
