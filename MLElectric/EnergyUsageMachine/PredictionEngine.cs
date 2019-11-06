@@ -10,13 +10,13 @@ using System;
 
 namespace EnergyUsageMachine
 {
-    public class MLModel
+    public class PredictionEngine
     {
         
         private readonly IEnumerable<EnergyUsage> _modelData;
         private readonly string _modelSavePath;
        
-        public MLModel(IEnumerable<EnergyUsage> modelData, string modelSavePath)
+        public PredictionEngine(IEnumerable<EnergyUsage> modelData, string modelSavePath)
         {
             _modelData = modelData;
             _modelSavePath = modelSavePath;
@@ -35,8 +35,7 @@ namespace EnergyUsageMachine
 
             var model = pipeline.Fit(dataView);
             mlContext.Model.Save(model, dataView.Schema, _modelSavePath);
-
-
+           
             return model;
         }
 
@@ -92,7 +91,7 @@ namespace EnergyUsageMachine
 
             var model = pipeline.Fit(dataView);
             mlContext.Model.Save(model, dataView.Schema, _modelSavePath);
-
+           
 
             return model;
         }

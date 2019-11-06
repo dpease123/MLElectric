@@ -93,40 +93,47 @@ namespace PowerUsageApi.Controllers
             {
                 var mlContext = new MLContext();
                 var modelData = ds.GetTrainingData(center, a, z);
-
-                var m = new Obj()
+                IDataView dataView = mlContext.Data.LoadFromEnumerable<EnergyUsage>(modelData);
+                var o = new Obj()
                 {
                     TypeName = RegressionTrainer.FastTree,
-                    TrainedModel = new MLModel(modelData, GetPath2(center, RegressionTrainer.FastTree)).FastTree()
-                };
-                trainedModels.Add(m);
+                    TrainedModel = new PredictionEngine(modelData, GetPath2(center, RegressionTrainer.FastTree)).FastTree()
 
-                m = new Obj()
+                };
+                trainedModels.Add(o);
+
+                o = new Obj()
                 {
                     TypeName = RegressionTrainer.FastTreeTweedie,
-                    TrainedModel = new MLModel(modelData, GetPath2(center, RegressionTrainer.FastTreeTweedie)).FastTreeTweedie()
+                    TrainedModel = new PredictionEngine(modelData, GetPath2(center, RegressionTrainer.FastTreeTweedie)).FastTreeTweedie()
                 };
-                trainedModels.Add(m);
+                trainedModels.Add(o);
 
-                m = new Obj()
+                o = new Obj()
                 {
                     TypeName = RegressionTrainer.FastForest,
-                    TrainedModel = new MLModel(modelData, GetPath2(center, RegressionTrainer.FastForest)).FastForest()
+                    TrainedModel = new PredictionEngine(modelData, GetPath2(center, RegressionTrainer.FastForest)).FastForest()
                 };
-                trainedModels.Add(m);
+                trainedModels.Add(o);
 
-                m = new Obj()
+                o = new Obj()
                 {
                     TypeName = RegressionTrainer.PoissonRegression,
-                    TrainedModel = new MLModel(modelData, GetPath2(center, RegressionTrainer.PoissonRegression)).PoissonRegression()
+                    TrainedModel = new PredictionEngine(modelData, GetPath2(center, RegressionTrainer.PoissonRegression)).PoissonRegression()
                 };
-                trainedModels.Add(m);
-                m = new Obj()
+                trainedModels.Add(o);
+                o = new Obj()
                 {
                     TypeName = RegressionTrainer.OnlineGradientDescent,
-                    TrainedModel = new MLModel(modelData, GetPath2(center, RegressionTrainer.OnlineGradientDescent)).OnlineGradientDescent()
+                    TrainedModel = new PredictionEngine(modelData, GetPath2(center, RegressionTrainer.OnlineGradientDescent)).OnlineGradientDescent()
                 };
-                trainedModels.Add(m);
+                trainedModels.Add(o);
+                //o = new Obj()
+                //{
+                //    TypeName = RegressionTrainer.Sdca,
+                //    TrainedModel = new MLModel(modelData, GetPath2(center, RegressionTrainer.Sdca)).Sdca()
+                //};
+                //trainedModels.Add(o);
 
 
                 var predictionsList = new List<Predictions>();
@@ -298,7 +305,7 @@ namespace PowerUsageApi.Controllers
 
                 ds.StageTrainingData(center, a.ToString(), z.ToString());
                 modelData = ds.GetTrainingData(center, WebConfigurationManager.AppSettings["MLDataStartDate"], z);
-                var mlModel = new MLModel(modelData, GetPath(center));
+                var mlModel = new PredictionEngine(modelData, GetPath(center));
                 mlModel.FastTree();
              
             }
@@ -329,7 +336,7 @@ namespace PowerUsageApi.Controllers
 
                     ds.StageTrainingData(center, a.ToString(), z);
                     modelData = ds.GetTrainingData(center, WebConfigurationManager.AppSettings["MLDataStartDate"],z);
-                    var mlModel = new MLModel(modelData, GetPath(center));
+                    var mlModel = new PredictionEngine(modelData, GetPath(center));
                     mlModel.FastTree();
 
                 }
@@ -397,7 +404,7 @@ namespace PowerUsageApi.Controllers
                     IEnumerable<EnergyUsage> modelData;
                     modelData = ds.GetTrainingData(center, WebConfigurationManager.AppSettings["MLDataStartDate"], DateTime.Now.ToShortDateString());
                     ds.UpdateCenterConfig(center);
-                    var mlModel = new MLModel(modelData, GetPath(center));
+                    var mlModel = new PredictionEngine(modelData, GetPath(center));
                     mlModel.FastTree();
 
                     //var sum = ds.GetDataSummary(mlContext, GetPath(center), center);
@@ -459,7 +466,7 @@ namespace PowerUsageApi.Controllers
                 IEnumerable<EnergyUsage> modelData;
                 modelData = ds.GetTrainingData(center, WebConfigurationManager.AppSettings["MLDataStartDate"], DateTime.Now.ToShortDateString());
                 center = ds.UpdateCenterConfig(center);
-                var mlModel = new MLModel(modelData, GetPath(center));
+                var mlModel = new PredictionEngine(modelData, GetPath(center));
                 mlModel.FastTree();
 
             }

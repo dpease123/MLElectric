@@ -121,7 +121,7 @@
     <Compile Include="Data\HyperHistorianContext.cs" />
     <Compile Include="Data\HyperHistorianRepository.cs" />
     <Compile Include="Evaluate.cs" />
-    <Compile Include="MLModel.cs" />
+    <Compile Include="PredictionEngine.cs" />
     <Compile Include="Models\IconicsData.cs" />
     <Compile Include="Models\CenterConfig.cs" />
     <Compile Include="POCO\EnergyUsage.cs" />

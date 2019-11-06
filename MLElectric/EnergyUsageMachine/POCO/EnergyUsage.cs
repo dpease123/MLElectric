@@ -22,11 +22,15 @@ namespace EnergyUsageMachine.POCO
         [LoadColumn(4)]
         public float kWH;
 
+
+
     }
 
     public class EnergyUsagePrediction
     {
         [ColumnName("Score")]
         public float kWH;
+
+       
     }
 }
