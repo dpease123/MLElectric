@@ -128,6 +128,7 @@ namespace PowerUsageApi.Controllers
                     TrainedModel = new PredictionEngine(modelData, GetPath2(center, RegressionTrainer.OnlineGradientDescent)).OnlineGradientDescent()
                 };
                 trainedModels.Add(o);
+
                 //o = new Obj()
                 //{
                 //    TypeName = RegressionTrainer.Sdca,
