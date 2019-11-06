@@ -14,6 +14,7 @@ using EnergyUsageMachine.Data;
 using EnergyUsageMachine.ViewModels;
 using System.Linq;
 using System.Text;
+using EnergyUsageMachine.Enums;
 
 namespace PowerUsageApi.Controllers
 {
@@ -74,7 +75,7 @@ namespace PowerUsageApi.Controllers
         [Route("api/EnergyUsage/Predict/BestModel")]
         public IHttpActionResult BestModel(MLTestObject testObj)
         {
-            List<Monkey> trainedModels = new List<Monkey>();
+            List<Obj> trainedModels = new List<Obj>();
             
             if (string.IsNullOrEmpty(testObj.CenterAbbr))
                 return BadRequest("3 character building abbreviation required");
@@ -93,50 +94,50 @@ namespace PowerUsageApi.Controllers
                 var mlContext = new MLContext();
                 var modelData = ds.GetTrainingData(center, a, z);
 
-                var m = new Monkey()
+                var m = new Obj()
                 {
-                    TypeName = "FastTree",
-                    TrainedModel = new MLModel(modelData, GetPath2(center, "FastTree")).FastTree()
+                    TypeName = RegressionTrainer.FastTree,
+                    TrainedModel = new MLModel(modelData, GetPath2(center, RegressionTrainer.FastTree)).FastTree()
                 };
                 trainedModels.Add(m);
 
-                m = new Monkey()
+                m = new Obj()
                 {
-                    TypeName = "FastTreeTweedie",
-                    TrainedModel = new MLModel(modelData, GetPath2(center, "FastTreeTweedie")).FastTreeTweedie()
+                    TypeName = RegressionTrainer.FastTreeTweedie,
+                    TrainedModel = new MLModel(modelData, GetPath2(center, RegressionTrainer.FastTreeTweedie)).FastTreeTweedie()
                 };
                 trainedModels.Add(m);
 
-                m = new Monkey()
+                m = new Obj()
                 {
-                TypeName = "FastForest",
-                TrainedModel = new MLModel(modelData, GetPath2(center, "FastForest")).FastForest()
+                    TypeName = RegressionTrainer.FastForest,
+                    TrainedModel = new MLModel(modelData, GetPath2(center, RegressionTrainer.FastForest)).FastForest()
                 };
                 trainedModels.Add(m);
 
-                m = new Monkey()
+                m = new Obj()
                 {
-                TypeName = "PoissonRegression",
-                TrainedModel = new MLModel(modelData, GetPath2(center, "PoissonRegression")).PoissonRegression()
+                    TypeName = RegressionTrainer.PoissonRegression,
+                    TrainedModel = new MLModel(modelData, GetPath2(center, RegressionTrainer.PoissonRegression)).PoissonRegression()
                 };
                 trainedModels.Add(m);
-                m = new Monkey()
+                m = new Obj()
                 {
-                TypeName = "OnlineGradientDescent",
-                TrainedModel = new MLModel(modelData, GetPath2(center, "OnlineGradientDescent")).OnlineGradientDescent()
+                    TypeName = RegressionTrainer.OnlineGradientDescent,
+                    TrainedModel = new MLModel(modelData, GetPath2(center, RegressionTrainer.OnlineGradientDescent)).OnlineGradientDescent()
                 };
                 trainedModels.Add(m);
 
 
                 var predictionsList = new List<Predictions>();
-                foreach(var tm in trainedModels)
+                foreach (var tm in trainedModels)
                 {
                     var usagePrediction = new Prediction(tm.TrainedModel, testObj, center);
                     var predictions = usagePrediction.PredictSingle();
                     var eval = new Evaluate(mlContext, GetPath2(center, tm.TypeName), center).EvaluateModel();
                     predictions.ModelQuality = eval;
                     predictions.Center = center.CenterAbbr;
-                    predictions.RegressionTrainer = tm.TypeName;
+                    predictions.TrainerUsed = tm.TypeName;
                     predictionsList.Add(predictions);
                 }
                 return Ok(predictionsList.OrderByDescending(x => x.ModelQuality.RSquaredScore));
@@ -489,7 +490,7 @@ namespace PowerUsageApi.Controllers
 
     }
 
-public class Monkey
+public class Obj
 {
     public string TypeName { get; set; }
     public ITransformer TrainedModel { get; set; }

@@ -134,6 +134,7 @@
     <Compile Include="POCO\Weather.cs" />
     <Compile Include="Prediction.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Enums\RegressionTrainer.cs" />
     <Compile Include="SaveModel.cs" />
     <Compile Include="Services\DataService.cs" />
     <Compile Include="Services\WeatherService.cs" />
