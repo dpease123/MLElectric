@@ -46,7 +46,8 @@ namespace PowerUsageApi.Controllers
 
             ITransformer trainedModel;
             var result = new Predictions();
-           
+            var errorsList = new List<string>();
+
             try
             {
                 var mlContext = new MLContext();
@@ -65,7 +66,12 @@ namespace PowerUsageApi.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                var msg = new StringBuilder();
+                msg.Append($"{center} - Message: { ex.Message}");
+                if (ex.InnerException != null)
+                    msg.Append($"Inner Ex: { ex.InnerException.ToString()}");
+                errorsList.Add(msg.ToString());
+                return Ok(errorsList);
             }
 
         }
@@ -86,6 +92,7 @@ namespace PowerUsageApi.Controllers
             if (center == null)
                 return BadRequest("Building not found");
 
+             var errorsList = new List<string>();
             var a = WebConfigurationManager.AppSettings["MLDataStartDate"];
             var z = DateTime.Now.ToString();
 
@@ -128,11 +135,17 @@ namespace PowerUsageApi.Controllers
                     TrainedModel = new PredictionEngine(modelData, GetPath2(center, RegressionTrainer.OnlineGradientDescent)).OnlineGradientDescent()
                 };
                 trainedModels.Add(o);
+                o = new Obj()
+                {
+                    TypeName = RegressionTrainer.Gam,
+                    TrainedModel = new PredictionEngine(modelData, GetPath2(center, RegressionTrainer.Gam)).Gam()
+                };
+                trainedModels.Add(o);
 
                 //o = new Obj()
                 //{
                 //    TypeName = RegressionTrainer.Sdca,
-                //    TrainedModel = new MLModel(modelData, GetPath2(center, RegressionTrainer.Sdca)).Sdca()
+                //    TrainedModel = new PredictionEngine(modelData, GetPath2(center, RegressionTrainer.Sdca)).Sdca()
                 //};
                 //trainedModels.Add(o);
 
@@ -152,7 +165,12 @@ namespace PowerUsageApi.Controllers
 }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                var msg = new StringBuilder();
+                msg.Append($"{center} - Message: { ex.Message}");
+                if (ex.InnerException != null)
+                    msg.Append($"Inner Ex: { ex.InnerException.ToString()}");
+                errorsList.Add(msg.ToString());
+                return Ok(errorsList);
             }
 
         }

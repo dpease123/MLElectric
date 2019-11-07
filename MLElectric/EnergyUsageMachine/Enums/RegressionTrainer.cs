@@ -14,6 +14,7 @@ namespace EnergyUsageMachine.Enums
         public const string PoissonRegression = "PoissonRegression";
         public const string OnlineGradientDescent = "OnlineGradientDescent";
         public const string Sdca = "Sdca";
+        public const string Gam = "Gam";
 
     }
 
