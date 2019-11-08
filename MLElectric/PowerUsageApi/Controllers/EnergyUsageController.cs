@@ -20,6 +20,7 @@ namespace PowerUsageApi.Controllers
 {
     public class EnergyUsageController : ApiController
     {
+        
         readonly List<string> LoadDates = new List<string>
         {
             "01/01/2017, 05/30/2017",
@@ -29,6 +30,8 @@ namespace PowerUsageApi.Controllers
             "01/01/2019, 05/30/2019",
             "06/01/2019, " + DateTime.Now.ToShortDateString()
         };
+        readonly MLContext mlContext = new MLContext();
+        readonly DataService dataService = new DataService();
 
         [SwaggerImplementationNotes("Returns a single energy usage prediction for testing purposes.")]
         [HttpPost]
@@ -38,14 +41,12 @@ namespace PowerUsageApi.Controllers
             if (string.IsNullOrEmpty(testObj.CenterAbbr))
                 return BadRequest("3 character building abbreviation required");
 
-            var ds = new DataService();
-            var center = ds.GetCenterConfig((testObj.CenterAbbr.Substring(0, 3).ToUpper()));
+            var center = dataService.GetCenterConfig((testObj.CenterAbbr.Substring(0, 3).ToUpper()));
 
             if (center == null)
                 return BadRequest("Building not found");
 
             ITransformer trainedModel;
-            var result = new Predictions();
             var errorsList = new List<string>();
 
             try
@@ -86,25 +87,23 @@ namespace PowerUsageApi.Controllers
             if (string.IsNullOrEmpty(testObj.CenterAbbr))
                 return BadRequest("3 character building abbreviation required");
 
-            var ds = new DataService();
-            var center = ds.GetCenterConfig((testObj.CenterAbbr.Substring(0, 3).ToUpper()));
+            var center = dataService.GetCenterConfig((testObj.CenterAbbr.Substring(0, 3).ToUpper()));
 
             if (center == null)
                 return BadRequest("Building not found");
 
-             var errorsList = new List<string>();
+            var errorsList = new List<string>();
             var a = WebConfigurationManager.AppSettings["MLDataStartDate"];
             var z = DateTime.Now.ToString();
 
             try
             {
-                var mlContext = new MLContext();
-                var modelData = ds.GetTrainingData(center, a, z);
+                var modelData = dataService.GetTrainingData(center, a, z);
                 IDataView dataView = mlContext.Data.LoadFromEnumerable<EnergyUsage>(modelData);
                 var o = new Obj()
                 {
                     TypeName = RegressionTrainer.FastTree,
-                    TrainedModel = new PredictionEngine(modelData, GetPath2(center, RegressionTrainer.FastTree)).FastTree()
+                    TrainedModel = new PredictionEngine(dataView, mlContext, GetPath2(center, RegressionTrainer.FastTree)).FastTree()
 
                 };
                 trainedModels.Add(o);
@@ -112,33 +111,33 @@ namespace PowerUsageApi.Controllers
                 o = new Obj()
                 {
                     TypeName = RegressionTrainer.FastTreeTweedie,
-                    TrainedModel = new PredictionEngine(modelData, GetPath2(center, RegressionTrainer.FastTreeTweedie)).FastTreeTweedie()
+                    TrainedModel = new PredictionEngine(dataView, mlContext, GetPath2(center, RegressionTrainer.FastTreeTweedie)).FastTreeTweedie()
                 };
                 trainedModels.Add(o);
 
                 o = new Obj()
                 {
                     TypeName = RegressionTrainer.FastForest,
-                    TrainedModel = new PredictionEngine(modelData, GetPath2(center, RegressionTrainer.FastForest)).FastForest()
+                    TrainedModel = new PredictionEngine(dataView, mlContext, GetPath2(center, RegressionTrainer.FastForest)).FastForest()
                 };
                 trainedModels.Add(o);
 
                 o = new Obj()
                 {
                     TypeName = RegressionTrainer.PoissonRegression,
-                    TrainedModel = new PredictionEngine(modelData, GetPath2(center, RegressionTrainer.PoissonRegression)).PoissonRegression()
+                    TrainedModel = new PredictionEngine(dataView, mlContext, GetPath2(center, RegressionTrainer.PoissonRegression)).PoissonRegression()
                 };
                 trainedModels.Add(o);
                 o = new Obj()
                 {
                     TypeName = RegressionTrainer.OnlineGradientDescent,
-                    TrainedModel = new PredictionEngine(modelData, GetPath2(center, RegressionTrainer.OnlineGradientDescent)).OnlineGradientDescent()
+                    TrainedModel = new PredictionEngine(dataView, mlContext, GetPath2(center, RegressionTrainer.OnlineGradientDescent)).OnlineGradientDescent()
                 };
                 trainedModels.Add(o);
                 o = new Obj()
                 {
                     TypeName = RegressionTrainer.Gam,
-                    TrainedModel = new PredictionEngine(modelData, GetPath2(center, RegressionTrainer.Gam)).Gam()
+                    TrainedModel = new PredictionEngine(dataView, mlContext, GetPath2(center, RegressionTrainer.Gam)).Gam()
                 };
                 trainedModels.Add(o);
 
@@ -182,9 +181,8 @@ namespace PowerUsageApi.Controllers
         {
             if (string.IsNullOrEmpty(BldgId))
                 return BadRequest("3 character building abbreviation required");
-
-            var ds = new DataService();
-            var center = ds.GetCenterConfig(BldgId.Substring(0, 3).ToUpper());
+          
+            var center = dataService.GetCenterConfig(BldgId.Substring(0, 3).ToUpper());
 
             if (center == null)
                 return BadRequest("Building not found");
@@ -193,7 +191,6 @@ namespace PowerUsageApi.Controllers
             var ws = new WeatherService();
             try
             {
-                var mlContext = new MLContext();
                 if (!File.Exists(GetPath(center)))
                     return BadRequest($"No machine learning model found for {center.CenterAbbr}");
 
@@ -241,13 +238,13 @@ namespace PowerUsageApi.Controllers
         //                return BadRequest("Start date must be prior to end date");
         //        }
 
-        //        var ds = new DataService();
-        //        var centers = ds.GetAllCenterConfigs();
+        //        
+        //        var centers = dataService.GetAllCenterConfigs();
 
         //        foreach (var center in centers)
         //        {
         //            IEnumerable<EnergyUsage> modelData;
-        //            modelData = ds.GetTrainingData(center, StartDate, EndDate);
+        //            modelData = dataService.GetTrainingData(center, StartDate, EndDate);
         //            var mlModel = new MLModel(modelData, GetPath(center));
         //            mlModel.Train();
         //        }
@@ -270,8 +267,8 @@ namespace PowerUsageApi.Controllers
         //        if (string.IsNullOrEmpty(BldgId))
         //            return BadRequest("3 character building abbreviation required i.e. BEV,CCK,TVO");
 
-        //        var ds = new DataService();
-        //        var center = ds.GetCenterConfig(BldgId.Substring(0, 3).ToUpper());
+        //        var dataService.= new DataService();
+        //        var center = dataService.GetCenterConfig(BldgId.Substring(0, 3).ToUpper());
 
         //        if (center == null)
         //            return BadRequest("Building not found");
@@ -294,7 +291,7 @@ namespace PowerUsageApi.Controllers
         //        }
 
         //        IEnumerable<EnergyUsage> modelData;
-        //        modelData = ds.GetTrainingData(center, StartDate, EndDate);
+        //        modelData = dataService.GetTrainingData(center, StartDate, EndDate);
         //        var mlModel = new MLModel(modelData, GetPath(center));
         //        mlModel.Train();
         //        return Ok($"{center.CenterAbbr} machine learning succesfully model trained.");
@@ -310,21 +307,21 @@ namespace PowerUsageApi.Controllers
         [Route("api/EnergyUsage/Train/NewData/{BldgId}")]
         public IHttpActionResult TrainNow(string BldgId)
         {
-            var ds = new DataService();
-            var center = ds.GetCenterConfig(BldgId.Substring(0, 3).ToUpper());
+         
+            var center = dataService.GetCenterConfig(BldgId.Substring(0, 3).ToUpper());
 
             if (center == null)
                 return BadRequest("Building not found");
 
-            var a = ds.GetMaxLoadDate(center);
+            var a = dataService.GetMaxLoadDate(center);
             var z = DateTime.Now.ToString();
+          
             try
             {
-                IEnumerable<EnergyUsage> modelData;
-
-                ds.StageTrainingData(center, a.ToString(), z.ToString());
-                modelData = ds.GetTrainingData(center, WebConfigurationManager.AppSettings["MLDataStartDate"], z);
-                var mlModel = new PredictionEngine(modelData, GetPath(center));
+                dataService.StageTrainingData(center, a.ToString(), z.ToString());
+                var modelData = dataService.GetTrainingData(center, WebConfigurationManager.AppSettings["MLDataStartDate"], z);
+                IDataView dataView = mlContext.Data.LoadFromEnumerable<EnergyUsage>(modelData);
+                var mlModel = new PredictionEngine(dataView, mlContext, GetPath(center));
                 mlModel.FastTree();
              
             }
@@ -342,20 +339,20 @@ namespace PowerUsageApi.Controllers
         [Route("api/EnergyUsage/Train/NewData/All")]
         public IHttpActionResult TrainAllNow()
         {
-            var ds = new DataService();
-            var centers = ds.GetAllCenterConfigs();
-
+            var centers = dataService.GetAllCenterConfigs();
+            IEnumerable<EnergyUsage> modelData;
             foreach (var center in centers)
             {
-                var a = ds.GetMaxLoadDate(center);
+                var a = dataService.GetMaxLoadDate(center);
                 var z = DateTime.Now.ToString();
+                
                 try
                 {
-                    IEnumerable<EnergyUsage> modelData;
-
-                    ds.StageTrainingData(center, a.ToString(), z);
-                    modelData = ds.GetTrainingData(center, WebConfigurationManager.AppSettings["MLDataStartDate"],z);
-                    var mlModel = new PredictionEngine(modelData, GetPath(center));
+                  
+                    dataService.StageTrainingData(center, a.ToString(), z.ToString());
+                    modelData = dataService.GetTrainingData(center, WebConfigurationManager.AppSettings["MLDataStartDate"], z);
+                    IDataView dataView = mlContext.Data.LoadFromEnumerable<EnergyUsage>(modelData);
+                    var mlModel = new PredictionEngine(dataView, mlContext, GetPath(center));
                     mlModel.FastTree();
 
                 }
@@ -375,15 +372,13 @@ namespace PowerUsageApi.Controllers
         [Route("api/EnergyUsage/IconicsData/SummaryReport")]
         public IHttpActionResult DataSummary()
         {
-            var ds = new DataService();
-            var mlContext = new MLContext();
             try
             {
-                var centers = ds.GetAllCenterConfigs();
+                var centers = dataService.GetAllCenterConfigs();
                 var list = new List<MLModelDataSummary>();
                 foreach (var c in centers)
                 {
-                    list.Add(ds.GetDataSummary(mlContext, GetPath(c), c));
+                    list.Add(dataService.GetDataSummary(mlContext, GetPath(c), c));
                 }
 
                 return Ok(list.OrderBy(x => x.Center).ToList());
@@ -402,31 +397,30 @@ namespace PowerUsageApi.Controllers
         {
             return Ok("Please contact IT to have all center data reloaded from Iconics.");
 
-            var ds = new DataService();
-            var centers = ds.GetAllCenterConfigs();
-            var mlContext = new MLContext();
+           
+            var centers = dataService.GetAllCenterConfigs();
             var errorsList = new List<string>();
 
             foreach (var center in centers)
             {
                 try
                 {
-                    ds.DeleteCenterData(center.CenterAbbr);
+                    dataService.DeleteCenterData(center.CenterAbbr);
 
                     foreach (var d in LoadDates)
                     {
                         var a = d.Split(',')[0];
                         var z = d.Split(',')[1];
-                        ds.StageTrainingData(center, a, z);
+                        dataService.StageTrainingData(center, a, z);
                     }
 
-                    IEnumerable<EnergyUsage> modelData;
-                    modelData = ds.GetTrainingData(center, WebConfigurationManager.AppSettings["MLDataStartDate"], DateTime.Now.ToShortDateString());
-                    ds.UpdateCenterConfig(center);
-                    var mlModel = new PredictionEngine(modelData, GetPath(center));
+                    var modelData = dataService.GetTrainingData(center, WebConfigurationManager.AppSettings["MLDataStartDate"], DateTime.Now.ToShortDateString());
+                    IDataView dataView = mlContext.Data.LoadFromEnumerable<EnergyUsage>(modelData);
+                    var mlModel = new PredictionEngine(dataView, mlContext, GetPath(center));
+                    dataService.UpdateCenterConfig(center);
                     mlModel.FastTree();
 
-                    //var sum = ds.GetDataSummary(mlContext, GetPath(center), center);
+                    //var sum = dataService.GetDataSummary(mlContext, GetPath(center), center);
                     //center.DataStartDate = DateTime.Parse("01/01/2017");
                     //center.DataEndDate = DateTime.Parse(sum.DataEndDate);
                     //center.DemandRecordCount = int.Parse(sum.DemandRecordCount);
@@ -435,7 +429,7 @@ namespace PowerUsageApi.Controllers
                     //center.RootMeanSquaredError = decimal.Parse(sum.ModelQuality.RootMeanSquaredError);
                     //center.RSquaredScore = decimal.Parse(sum.ModelQuality.RSquaredScore);
                     //center.ModelGrade = sum.ModelQuality.Grade;
-                    //ds.UpdateCenterConfig(center);
+                    //dataService.UpdateCenterConfig(center);
 
                 }
 
@@ -463,15 +457,14 @@ namespace PowerUsageApi.Controllers
         public IHttpActionResult IconicsDataForCenter(string BldgId)
         {
             
-            var ds = new DataService();
-            var center = ds.GetCenterConfig(BldgId.Substring(0, 3).ToUpper());
+            var center = dataService.GetCenterConfig(BldgId.Substring(0, 3).ToUpper());
 
             if (center == null)
                 return BadRequest("Building not found");
-            return Ok($"Please contact IT to have {BldgId} center data reloaded from Iconics.");
-            var dataList = new List<EnergyUsage>();
 
-            ds.DeleteCenterData(center.CenterAbbr);
+            return Ok($"Please contact IT to have {BldgId} center data reloaded from Iconics.");
+
+            dataService.DeleteCenterData(center.CenterAbbr);
 
             try
             {
@@ -479,13 +472,13 @@ namespace PowerUsageApi.Controllers
                 {
                     var a = d.Split(',')[0];
                     var z = d.Split(',')[1];
-                    ds.StageTrainingData(center, a, z);
+                    dataService.StageTrainingData(center, a, z);
                 };
 
-                IEnumerable<EnergyUsage> modelData;
-                modelData = ds.GetTrainingData(center, WebConfigurationManager.AppSettings["MLDataStartDate"], DateTime.Now.ToShortDateString());
-                center = ds.UpdateCenterConfig(center);
-                var mlModel = new PredictionEngine(modelData, GetPath(center));
+                var modelData = dataService.GetTrainingData(center, WebConfigurationManager.AppSettings["MLDataStartDate"], DateTime.Now.ToShortDateString());
+                IDataView dataView = mlContext.Data.LoadFromEnumerable<EnergyUsage>(modelData);
+                var mlModel = new PredictionEngine(dataView, mlContext, GetPath(center));
+                dataService.UpdateCenterConfig(center);
                 mlModel.FastTree();
 
             }
