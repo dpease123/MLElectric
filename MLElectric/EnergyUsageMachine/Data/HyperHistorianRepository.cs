@@ -110,6 +110,44 @@ namespace EnergyUsageMachine.Data
             return usage.AsEnumerable();
         }
 
+        public IEnumerable<EnergyUsage> GetTrainingData(CenterConfig center)
+        {
+            var tempData = (ctx.IconicsData.Where(x => x.CenterAbbr == center.CenterAbbr && x.Fulltag.Contains("Temperature_F")).ToList());
+
+
+            var energyData = (ctx.IconicsData.Where(x => x.CenterAbbr == center.CenterAbbr && x.Fulltag.Contains("Peak_DEM")).ToList());
+
+
+            var merged = (from temp in tempData
+                          join energy in energyData
+                             on temp.TimeStamp equals energy.TimeStamp
+                          select new
+                          {
+                              Center = temp.CenterAbbr,
+                              AvgTemp = temp.AvgValue,
+                              kWH = energy.AvgValue,
+                              Date = temp.TimeStamp,
+                          }).ToList();
+
+            var usage = new List<EnergyUsage>();
+            foreach (var m in merged)
+            {
+                var e = new EnergyUsage()
+                {
+                    Center = m.Center,
+                    AvgTemp = Math.Round(m.AvgTemp, 6, MidpointRounding.ToEven),
+                    kWH = float.Parse(Math.Round(m.kWH, 6, MidpointRounding.ToEven).ToString()),
+                    DayOfWeek = (int)m.Date.DayOfWeek,
+                    Hour = m.Date.Hour
+                };
+                usage.Add(e);
+            }
+
+
+            return usage.AsEnumerable();
+        }
+
+
         public MLModelDataSummary GetTrainingDataSummary(CenterConfig center)
         {
             var dsList = new List<MLModelDataSummary>();
@@ -150,10 +188,17 @@ namespace EnergyUsageMachine.Data
             return ctx.CenterConfig.ToList();
         }
 
-        public CenterConfig UpdateConfig(CenterConfig m)
+        public CenterConfig UpdateConfig(CenterConfig cc)
         {
-            var row = ctx.CenterConfig.Find(m.CenterAbbr);
+            var row = ctx.CenterConfig.Find(cc.CenterAbbr);
             row.DateUpdated = DateTime.Now;
+            row.BestTrainer = cc.BestTrainer;
+            row.ModelGrade = cc.ModelGrade;
+            row.RSquaredScore = cc.RSquaredScore;
+            row.RootMeanSquaredError = cc.RootMeanSquaredError;
+            row.JoinedRecordCount = cc.JoinedRecordCount;
+            row.DemandRecordCount = cc.DemandRecordCount;
+            row.TemperatureRecordCount = cc.TemperatureRecordCount;
             ctx.SaveChanges();
 
             return row;

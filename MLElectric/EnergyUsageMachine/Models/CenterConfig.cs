@@ -1,4 +1,5 @@
-﻿using EnergyUsageMachine.POCO;
+﻿using EnergyUsageMachine.Enums;
+using EnergyUsageMachine.POCO;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -32,6 +33,7 @@ namespace EnergyUsageMachine.Models
         public string ModelGrade { get; set; }
 
         public DateTime? DateUpdated { get; set; }
+        public  string BestTrainer { get; set; }
 
         public IEnumerable<EnergyUsage> EnergyUSage {get; set;}
     }

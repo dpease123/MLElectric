@@ -30,6 +30,11 @@ namespace EnergyUsageMachine.Services
             return hhr.GetTrainingData(center, startDate, endDate).ToList();
         }
 
+        public IEnumerable<EnergyUsage> GetTrainingDataForCenter(CenterConfig center)
+        {
+            return hhr.GetTrainingData(center).ToList();
+        }
+
         public void StageTrainingData(CenterConfig center, string startDate, string endDate)
         {
             hhr.StageTrainingData(center, startDate, endDate);
