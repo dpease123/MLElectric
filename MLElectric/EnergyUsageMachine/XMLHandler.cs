@@ -15,7 +15,7 @@ namespace EnergyUsageMachine
 {
     public static class XMLHandler
     {
-        public static void GenerateXMLFile(PredictionResult results, CenterConfig c)
+        public static void GenerateXMLFile(PredictionResult results, Center c)
         {
             var filePath = Path.Combine(WebConfigurationManager.AppSettings["XMLFilePath"], "output.xml");
             XmlSerializer serialiser = new XmlSerializer(typeof(PredictionResult));

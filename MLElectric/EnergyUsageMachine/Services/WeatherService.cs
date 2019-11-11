@@ -12,7 +12,7 @@ namespace EnergyUsageMachine.Services
     {
         System.Net.Http.HttpClient client = new System.Net.Http.HttpClient();
 
-        public async Task<Forecast> Get24HrForecast(CenterConfig mls)
+        public async Task<Forecast> Get24HrForecast(Center mls)
         {
 
             var Forecast = new Forecast
@@ -40,7 +40,7 @@ namespace EnergyUsageMachine.Services
             return Forecast;
         }
 
-        private async Task<Forecast> GetForecastURLs(CenterConfig mls, Forecast Forecast)
+        private async Task<Forecast> GetForecastURLs(Center mls, Forecast Forecast)
         {
             client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "Taubman/1.1");
             var centerWeatherDetails = await client.GetAsync(mls.WeatherURL);
@@ -48,7 +48,7 @@ namespace EnergyUsageMachine.Services
             return Forecast;
         }
 
-        public async Task<Forecast> Get3DayForecast(CenterConfig mls)
+        public async Task<Forecast> Get3DayForecast(Center mls)
         {
 
             var Forecast = new Forecast

@@ -13,9 +13,9 @@ namespace EnergyUsageMachine
     {
         private readonly MLContext _MLContext;
         public readonly string _modelPath;
-        private readonly CenterConfig _centerConfig;
+        private readonly Center _centerConfig;
 
-        public Evaluate(MLContext mlContext, string modelPath, CenterConfig center)
+        public Evaluate(MLContext mlContext, string modelPath, Center center)
         {
             //_model = model;
             _MLContext = mlContext;

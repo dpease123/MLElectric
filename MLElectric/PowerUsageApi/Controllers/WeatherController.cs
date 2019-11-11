@@ -23,7 +23,7 @@ namespace PowerUsageApi.Controllers
                 var ws = new WeatherService();
                 var ds = new DataService();
 
-                var center = ds.GetCenterConfig(BldgId.Substring(0, 3).ToUpper());
+                var center = ds.GetCenterById(BldgId.Substring(0, 3).ToUpper());
 
                 if (center == null)
                     return BadRequest("Building not found");
@@ -50,7 +50,7 @@ namespace PowerUsageApi.Controllers
             {
                 var ws = new WeatherService();
                 var ds = new DataService();
-                var center = ds.GetCenterConfig(BldgId.Substring(0, 3).ToUpper());
+                var center = ds.GetCenterById(BldgId.Substring(0, 3).ToUpper());
                 if (center == null)
                     return BadRequest("Building not found");
 

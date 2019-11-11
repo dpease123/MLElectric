@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 namespace EnergyUsageMachine.Models
 {
     [Table("ML_CenterConfig")]
-    public class CenterConfig
+    public class Center
     {
         [Key]
         public string CenterAbbr { get; set; }

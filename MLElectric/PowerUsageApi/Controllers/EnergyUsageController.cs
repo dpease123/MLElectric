@@ -40,7 +40,7 @@ namespace PowerUsageApi.Controllers
             if (string.IsNullOrEmpty(testObj.CenterAbbr))
                 return BadRequest("3 character building abbreviation required");
 
-            var center = dataService.GetCenterConfig((testObj.CenterAbbr.Substring(0, 3).ToUpper()));
+            var center = dataService.GetCenterById((testObj.CenterAbbr.Substring(0, 3).ToUpper()));
 
             if (center == null)
                 return BadRequest("Building not found");
@@ -77,17 +77,56 @@ namespace PowerUsageApi.Controllers
 
         }
 
+        [SwaggerImplementationNotes("Returns the predicted next 24hrs. of energy usage. Parameters: BldgId= BEV,UTC,CCK")]
+        [HttpGet]
+        [Route("api/EnergyUsage/Predict/{BldgId}")]
+        public IHttpActionResult EnergyUsage(string BldgId)
+        {
+            if (string.IsNullOrEmpty(BldgId))
+                return BadRequest("3 character building abbreviation required");
+          
+            var center = dataService.GetCenterById(BldgId.Substring(0, 3).ToUpper());
+
+            if (center == null)
+                return BadRequest("Building not found");
+
+            ITransformer trainedModel;
+            var ws = new WeatherService();
+            try
+            {
+                if (!File.Exists(GetPath(center, center.BestTrainer)))
+                    return BadRequest($"No machine learning model found for {center.CenterAbbr}");
+
+                trainedModel = mlContext.Model.Load(GetPath(center, center.BestTrainer), out DataViewSchema modelSchema);
+
+                var weatherForeCast = Task.Run(async () => await ws.Get24HrForecast(center)).Result;
+
+                var usagePredictions = new Prediction(trainedModel, weatherForeCast, center);
+
+                var results = usagePredictions.Predict();
+                results.ModelUsed = center.BestTrainer;
+                XMLHandler.GenerateXMLFile(results, center);
+
+                return Ok(XMLHandler.SerializeXml<PredictionResult>(usagePredictions.Predict()));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+
+        }
+
         [SwaggerImplementationNotes("Returns an evaluation of each machine learning model ranked by quality.")]
         [HttpPost]
         [Route("api/EnergyUsage/EvaluateModels/")]
         public IHttpActionResult EvaluateModels(MLTestObject testObj)
         {
             List<Obj> trainedModels = new List<Obj>();
-            
+
             if (string.IsNullOrEmpty(testObj.CenterAbbr))
                 return BadRequest("3 character building abbreviation required");
 
-            var center = dataService.GetCenterConfig((testObj.CenterAbbr.Substring(0, 3).ToUpper()));
+            var center = dataService.GetCenterById((testObj.CenterAbbr.Substring(0, 3).ToUpper()));
 
             if (center == null)
                 return BadRequest("Building not found");
@@ -159,7 +198,7 @@ namespace PowerUsageApi.Controllers
                     predictionsList.Add(predictions);
                 }
                 return Ok(predictionsList.OrderByDescending(x => x.ModelQuality.RSquaredScore));
-}
+            }
             catch (Exception ex)
             {
                 var msg = new StringBuilder();
@@ -172,52 +211,13 @@ namespace PowerUsageApi.Controllers
 
         }
 
-        [SwaggerImplementationNotes("Returns the predicted next 24hrs. of energy usage. Parameters: BldgId= BEV,UTC,CCK")]
-        [HttpGet]
-        [Route("api/EnergyUsage/Predict/{BldgId}")]
-        public IHttpActionResult EnergyUsage(string BldgId)
-        {
-            if (string.IsNullOrEmpty(BldgId))
-                return BadRequest("3 character building abbreviation required");
-          
-            var center = dataService.GetCenterConfig(BldgId.Substring(0, 3).ToUpper());
-
-            if (center == null)
-                return BadRequest("Building not found");
-
-            ITransformer trainedModel;
-            var ws = new WeatherService();
-            try
-            {
-                if (!File.Exists(GetPath(center, center.BestTrainer)))
-                    return BadRequest($"No machine learning model found for {center.CenterAbbr}");
-
-                trainedModel = mlContext.Model.Load(GetPath(center, center.BestTrainer), out DataViewSchema modelSchema);
-
-                var weatherForeCast = Task.Run(async () => await ws.Get24HrForecast(center)).Result;
-
-                var usagePredictions = new Prediction(trainedModel, weatherForeCast, center);
-
-                var results = usagePredictions.Predict();
-                results.ModelUsed = center.BestTrainer;
-                XMLHandler.GenerateXMLFile(results, center);
-
-                return Ok(XMLHandler.SerializeXml<PredictionResult>(usagePredictions.Predict()));
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
-
-        }
-        
         [SwaggerImplementationNotes("Refresh machine learning models with the latest Iconics data. Parameters: None")]
         [HttpGet]
         [Route("api/EnergyUsage/Train/NewData/All")]
         public IHttpActionResult TrainAllNow()
         {
             var errorsList = new List<string>();
-            var centers = dataService.GetAllCenterConfigs();
+            var centers = dataService.GetAllCenters();
 
             foreach (var center in centers)
             {
@@ -243,7 +243,7 @@ namespace PowerUsageApi.Controllers
             if (errorsList.Any())
                 return Ok(errorsList);
 
-            return Ok(dataService.GetAllCenterConfigs());
+            return Ok(dataService.GetAllCenters());
 
         }
 
@@ -253,27 +253,16 @@ namespace PowerUsageApi.Controllers
         public IHttpActionResult DataSummary()
         {
             var errorsList = new List<string>();
-            var centers = dataService.GetAllCenterConfigs();
+            var centers = dataService.GetAllCenters();
             return Ok(centers);
 
             //var list = new List<MLModelDataSummary>();
             //try
             //{
-                
             //    foreach (var c in centers)
             //    {
-            //        var rpt = dataService.GetDataSummary(mlContext, GetPath(c), c);
-            //        list.Add(rpt);
-            //        c.JoinedRecordCount = int.Parse(rpt.JoinedCount.Replace(",",""));
-            //        c.DemandRecordCount = int.Parse(rpt.DemandRecordCount.Replace(",", ""));
-            //        c.TemperatureRecordCount = int.Parse(rpt.TemperatureRecordCount.Replace(",", ""));
-            //        c.DataStartDate = DateTime.Parse(rpt.DataStartDate);
-            //        c.DataEndDate = DateTime.Parse(rpt.DataEndDate);
-
-            //        dataService.UpdateCenterConfig(c);
+            //        list.Add(dataService.GetDataSummary(mlContext, GetPath(c), c));
             //    }
-
-               
             //}
             //catch (Exception ex)
             //{
@@ -282,7 +271,7 @@ namespace PowerUsageApi.Controllers
             //    if (ex.InnerException != null)
             //        msg.Append($"Inner Ex: { ex.InnerException.ToString()}");
             //    errorsList.Add(msg.ToString());
-                
+
             //}
 
             //if (errorsList.Any())
@@ -300,7 +289,7 @@ namespace PowerUsageApi.Controllers
             //return Ok("Please contact IT to have all center data reloaded from Iconics.");
 
             var errorsList = new List<string>();
-            var centers = dataService.GetAllCenterConfigs();
+            var centers = dataService.GetAllCenters();
 
             foreach (var center in centers)
             {
@@ -330,12 +319,12 @@ namespace PowerUsageApi.Controllers
             if (errorsList.Any())
                 return Ok(errorsList);
 
-            return Ok(dataService.GetAllCenterConfigs());
+            return Ok(dataService.GetAllCenters());
         }
 
         #region Private  
 
-        private void TrainModels(CenterConfig center)
+        private void TrainModels(Center center)
         {
             var predictionsList = new List<Predictions>();
             IEnumerable<EnergyUsage> modelData;
@@ -347,7 +336,7 @@ namespace PowerUsageApi.Controllers
             center.TemperatureRecordCount = int.Parse(rpt.TemperatureRecordCount.Replace(",", ""));
             center.DataStartDate = DateTime.Parse(rpt.DataStartDate);
             center.DataEndDate = DateTime.Parse(rpt.DataEndDate);
-            dataService.UpdateCenterConfig(center);
+            dataService.UpdateCenter(center);
 
             modelData = dataService.GetTrainingDataForCenter(center);
             IDataView dataView = mlContext.Data.LoadFromEnumerable<EnergyUsage>(modelData);
@@ -436,12 +425,12 @@ namespace PowerUsageApi.Controllers
             return DateTime.TryParse(date, out DateTime dDate);
         }
 
-        private static string GetPath(EnergyUsageMachine.Models.CenterConfig center)
+        private static string GetPath(EnergyUsageMachine.Models.Center center)
         {
             return Path.Combine(WebConfigurationManager.AppSettings["MLModelPath"], "Model_" + center.CenterAbbr.ToUpper() + ".zip");
         }
 
-        private static string GetPath(EnergyUsageMachine.Models.CenterConfig center, string trainer)
+        private static string GetPath(EnergyUsageMachine.Models.Center center, string trainer)
         {
             return Path.Combine(WebConfigurationManager.AppSettings["MLModelPath"], "Model_" + center.CenterAbbr.ToUpper() +"_"+ trainer + ".zip");
         }
@@ -452,14 +441,14 @@ namespace PowerUsageApi.Controllers
            
             foreach (var grp in list.GroupBy(x=> x.Center))
             {
-                var center = dataService.GetCenterConfig(grp.Key);
+                var center = dataService.GetCenterById(grp.Key);
                 var highestRank = grp.OrderByDescending(c => c.ModelQuality.RSquaredScore).First();
                 bestModelForCenterList.Add(highestRank);
                 center.BestTrainer = highestRank.TrainerUsed;
                 center.ModelGrade = highestRank.ModelQuality.Grade;
                 center.RootMeanSquaredError = decimalparse(highestRank.ModelQuality.RootMeanSquaredError.ToString());
                 center.RSquaredScore = decimalparse(highestRank.ModelQuality.RSquaredScore.ToString());
-                dataService.UpdateCenterConfig(center);
+                dataService.UpdateCenter(center);
             }
             return bestModelForCenterList;
         }

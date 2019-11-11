@@ -123,7 +123,7 @@
     <Compile Include="Evaluate.cs" />
     <Compile Include="PredictionEngine.cs" />
     <Compile Include="Models\IconicsData.cs" />
-    <Compile Include="Models\CenterConfig.cs" />
+    <Compile Include="Models\Center.cs" />
     <Compile Include="POCO\EnergyUsage.cs" />
     <Compile Include="POCO\EvaluateModel.cs" />
     <Compile Include="POCO\Forecast.cs" />

@@ -15,27 +15,27 @@ namespace EnergyUsageMachine.Services
     {
         HyperHistorianRepository hhr = new HyperHistorianRepository();
 
-        public CenterConfig GetCenterConfig(string Id)
+        public Center GetCenterById(string Id)
         {
-            return hhr.GetMLSetting(Id);
+            return hhr.GetCenterById(Id);
         }
 
-        public List<CenterConfig>GetAllCenterConfigs()
+        public List<Center>GetAllCenters()
         {
-            return hhr.GetAllMLSettings();
+            return hhr.GetAllCenters();
         }
 
-        public IEnumerable<EnergyUsage> GetTrainingData(CenterConfig center, string startDate, string endDate)
+        public IEnumerable<EnergyUsage> GetTrainingData(Center center, string startDate, string endDate)
         {
             return hhr.GetTrainingData(center, startDate, endDate).ToList();
         }
 
-        public IEnumerable<EnergyUsage> GetTrainingDataForCenter(CenterConfig center)
+        public IEnumerable<EnergyUsage> GetTrainingDataForCenter(Center center)
         {
             return hhr.GetTrainingData(center).ToList();
         }
 
-        public void StageTrainingData(CenterConfig center, string startDate, string endDate)
+        public void StageTrainingData(Center center, string startDate, string endDate)
         {
             hhr.StageTrainingData(center, startDate, endDate);
         }
@@ -46,17 +46,12 @@ namespace EnergyUsageMachine.Services
             return hhr.DeleteCenterData(BldgId);
         }
 
-        public CenterConfig UpdateCenterConfig(CenterConfig m)
+        public Center UpdateCenter(Center m)
         {
-            return hhr.UpdateConfig(m);
+            return hhr.UpdateCenter(m);
         }
 
-        public DateTime GetMaxLoadDate(CenterConfig center)
-        {
-            return DateTime.Parse(hhr.GetTrainingDataSummary(center).DataEndDate);
-        }
-
-        public MLModelDataSummary GetDataSummary(MLContext ctx, string modelPath, CenterConfig center)
+        public MLModelDataSummary GetDataSummary(MLContext ctx, string modelPath, Center center)
         {
             var eval = new Evaluate(ctx, modelPath,  center);
             var summary = hhr.GetTrainingDataSummary(center);

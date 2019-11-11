@@ -15,17 +15,17 @@ namespace EnergyUsageMachine
     {
         private readonly ITransformer _trainedModel;
         private readonly Forecast _forecast;
-        private readonly CenterConfig _center;
+        private readonly Center _center;
         private readonly MLTestObject _testObj;
 
-        public Prediction(ITransformer trainedModel, Forecast forecast, CenterConfig center)
+        public Prediction(ITransformer trainedModel, Forecast forecast, Center center)
         {
             _trainedModel = trainedModel;
             _forecast = forecast;
             _center = center;
         }
 
-        public Prediction(ITransformer trainedModel, MLTestObject testObj, CenterConfig center)
+        public Prediction(ITransformer trainedModel, MLTestObject testObj, Center center)
         {
             _trainedModel = trainedModel;
             _center = center;

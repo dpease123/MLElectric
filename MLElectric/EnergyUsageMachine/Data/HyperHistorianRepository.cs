@@ -14,7 +14,7 @@ namespace EnergyUsageMachine.Data
     public class HyperHistorianRepository
     {
         HyperHistorianContext ctx = new HyperHistorianContext();
-        private List<CenterTemp_History> GetTemperatureData(CenterConfig c, string startDate, string endDate)
+        private List<CenterTemp_History> GetTemperatureData(Center c, string startDate, string endDate)
         {
 
             object[] xparams = {
@@ -31,7 +31,7 @@ namespace EnergyUsageMachine.Data
                     xparams).ToList();
         }
 
-        private List<CenterkWhUsage_History> GetEnergyDemandData(CenterConfig c, string startDate, string endDate)
+        private List<CenterkWhUsage_History> GetEnergyDemandData(Center c, string startDate, string endDate)
         {
             object[] xparams = {
             new SqlParameter("@regionName", c.Region),
@@ -48,7 +48,7 @@ namespace EnergyUsageMachine.Data
 
         }
 
-        public void StageTrainingData(CenterConfig center, string startDate, string endDate)
+        public void StageTrainingData(Center center, string startDate, string endDate)
         {
             var tempData = GetTemperatureData(center, startDate, endDate);
             var energyData = GetEnergyDemandData(center, startDate, endDate);
@@ -68,7 +68,7 @@ namespace EnergyUsageMachine.Data
             //  return merged.AsEnumerable();
         }
 
-        public IEnumerable<EnergyUsage> GetTrainingData(CenterConfig center, string startDate, string endDate)
+        public IEnumerable<EnergyUsage> GetTrainingData(Center center, string startDate, string endDate)
         {
             var a = DateTime.Parse(startDate);
             var z = DateTime.Parse(endDate);
@@ -110,7 +110,7 @@ namespace EnergyUsageMachine.Data
             return usage.AsEnumerable();
         }
 
-        public IEnumerable<EnergyUsage> GetTrainingData(CenterConfig center)
+        public IEnumerable<EnergyUsage> GetTrainingData(Center center)
         {
             var tempData = (ctx.IconicsData.Where(x => x.CenterAbbr == center.CenterAbbr && x.Fulltag.Contains("Temperature_F")).ToList());
 
@@ -148,7 +148,7 @@ namespace EnergyUsageMachine.Data
         }
 
 
-        public MLModelDataSummary GetTrainingDataSummary(CenterConfig center)
+        public MLModelDataSummary GetTrainingDataSummary(Center center)
         {
             var dsList = new List<MLModelDataSummary>();
             var tempData = (ctx.IconicsData.Where(x => x.Fulltag.Contains("Temperature_F") && x.CenterAbbr == center.CenterAbbr).ToList());
@@ -178,17 +178,17 @@ namespace EnergyUsageMachine.Data
            
         }
 
-        public CenterConfig GetMLSetting(string Id)
+        public Center GetCenterById(string Id)
         {
             return ctx.CenterConfig.Find(Id);
         }
 
-        public List<CenterConfig> GetAllMLSettings()
+        public List<Center> GetAllCenters()
         {
             return ctx.CenterConfig.ToList();
         }
 
-        public CenterConfig UpdateConfig(CenterConfig cc)
+        public Center UpdateCenter(Center cc)
         {
             var row = ctx.CenterConfig.Find(cc.CenterAbbr);
             row.DateUpdated = DateTime.Now;

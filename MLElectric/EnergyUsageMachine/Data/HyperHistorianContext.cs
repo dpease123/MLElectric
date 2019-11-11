@@ -11,7 +11,7 @@ namespace EnergyUsageMachine.Data
     public partial class HyperHistorianContext : DbContext
     {
 
-        public DbSet<CenterConfig> CenterConfig { get; set; }
+        public DbSet<Center> CenterConfig { get; set; }
        
         public DbSet<IconicsData> IconicsData { get; set; }
 
