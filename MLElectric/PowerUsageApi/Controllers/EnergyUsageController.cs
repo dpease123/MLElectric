@@ -7,15 +7,12 @@ using Microsoft.ML;
 using EnergyUsageMachine;
 using EnergyUsageMachine.POCO;
 using System.Collections.Generic;
-using System.Xml.Serialization;
 using System;
 using System.Web.Configuration;
-using EnergyUsageMachine.Data;
 using EnergyUsageMachine.ViewModels;
 using System.Linq;
 using System.Text;
 using EnergyUsageMachine.Enums;
-using EnergyUsageMachine.Models;
 
 namespace PowerUsageApi.Controllers
 {
@@ -56,13 +53,14 @@ namespace PowerUsageApi.Controllers
                 if (!File.Exists(GetPath(center)))
                     return BadRequest($"No machine learning model found for {center.CenterAbbr}");
 
-                trainedModel = mlContext.Model.Load(GetPath(center), out DataViewSchema modelSchema);
+                trainedModel = mlContext.Model.Load(GetPath(center, center.BestTrainer), out DataViewSchema modelSchema);
 
                 var usagePrediction = new Prediction(trainedModel, testObj, center);
                 var predictions = usagePrediction.PredictSingle();
-                var eval = new Evaluate(mlContext, GetPath(center), center).EvaluateModel();
+                var eval = new Evaluate(mlContext, GetPath(center, center.BestTrainer), center).EvaluateModel();
                 predictions.ModelQuality = eval;
                 predictions.Center = center.CenterAbbr;
+                predictions.TrainerUsed = center.BestTrainer;
 
                 return Ok(predictions);
             }
@@ -316,17 +314,17 @@ namespace PowerUsageApi.Controllers
             var ws = new WeatherService();
             try
             {
-                if (!File.Exists(GetPath(center)))
+                if (!File.Exists(GetPath(center, center.BestTrainer)))
                     return BadRequest($"No machine learning model found for {center.CenterAbbr}");
 
-                trainedModel = mlContext.Model.Load(GetPath(center), out DataViewSchema modelSchema);
+                trainedModel = mlContext.Model.Load(GetPath(center, center.BestTrainer), out DataViewSchema modelSchema);
 
                 var weatherForeCast = Task.Run(async () => await ws.Get24HrForecast(center)).Result;
 
                 var usagePredictions = new Prediction(trainedModel, weatherForeCast, center);
 
                 var results = usagePredictions.Predict();
-
+                results.ModelUsed = center.BestTrainer;
                 XMLHandler.GenerateXMLFile(results, center);
 
                 return Ok(XMLHandler.SerializeXml<PredictionResult>(usagePredictions.Predict()));
@@ -497,21 +495,41 @@ namespace PowerUsageApi.Controllers
         [Route("api/EnergyUsage/IconicsData/SummaryReport")]
         public IHttpActionResult DataSummary()
         {
+            var errorsList = new List<string>();
+            var centers = dataService.GetAllCenterConfigs();
+                var list = new List<MLModelDataSummary>();
             try
             {
-                var centers = dataService.GetAllCenterConfigs();
-                var list = new List<MLModelDataSummary>();
+                
                 foreach (var c in centers)
                 {
-                    list.Add(dataService.GetDataSummary(mlContext, GetPath(c), c));
+                    var rpt = dataService.GetDataSummary(mlContext, GetPath(c), c);
+                    list.Add(rpt);
+                    c.JoinedRecordCount = int.Parse(rpt.JoinedCount.Replace(",",""));
+                    c.DemandRecordCount = int.Parse(rpt.DemandRecordCount.Replace(",", ""));
+                    c.TemperatureRecordCount = int.Parse(rpt.TemperatureRecordCount.Replace(",", ""));
+                    c.DataStartDate = DateTime.Parse(rpt.DataStartDate);
+                    c.DataEndDate = DateTime.Parse(rpt.DataEndDate);
+
+                    dataService.UpdateCenterConfig(c);
                 }
 
-                return Ok(list.OrderBy(x => x.Center).ToList());
+               
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.InnerException.ToString());
+                var msg = new StringBuilder();
+                msg.Append($"Message: { ex.Message}");
+                if (ex.InnerException != null)
+                    msg.Append($"Inner Ex: { ex.InnerException.ToString()}");
+                errorsList.Add(msg.ToString());
+                
             }
+
+            if (errorsList.Any())
+                return Ok(errorsList);
+
+            return Ok(list.OrderBy(x => x.Center).ToList());
 
         }
 

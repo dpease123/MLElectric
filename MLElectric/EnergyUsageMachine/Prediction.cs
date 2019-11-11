@@ -39,7 +39,8 @@ namespace EnergyUsageMachine
             var predictionFunction = _MLContext.Model.CreatePredictionEngine<EnergyUsage, EnergyUsagePrediction>(_trainedModel);
             var results = new PredictionResult
             {
-                Center = _center.CenterAbbr
+                Center = _center.CenterAbbr,
+                ModelUsed = _center.BestTrainer
             };
 
 

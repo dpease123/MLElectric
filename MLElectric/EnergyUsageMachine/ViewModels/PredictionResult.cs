@@ -20,6 +20,9 @@ namespace EnergyUsageMachine.ViewModels
         public List<Predictions> Predictions { get; set; }
         [XmlAttribute("Center")]
         public string Center { get; set; }
+        [XmlAttribute("ModelUsed")]
+        public string ModelUsed { get; set; }
+
 
         
     }
