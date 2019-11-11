@@ -294,7 +294,7 @@ namespace PowerUsageApi.Controllers
             if (errorsList.Any())
                 return Ok(errorsList);
 
-            return Ok(bestModelForCenters(predictionsList));
+            return Ok(SelectBestModelForCenters(predictionsList));
         }
 
         [SwaggerImplementationNotes("Returns the predicted next 24hrs. of energy usage for a building. Parameters: BldgId= BEV,UTC,CCK")]
@@ -462,30 +462,123 @@ namespace PowerUsageApi.Controllers
         [Route("api/EnergyUsage/Train/NewData/All")]
         public IHttpActionResult TrainAllNow()
         {
+            var predictionsList = new List<Predictions>();
             var centers = dataService.GetAllCenterConfigs();
             IEnumerable<EnergyUsage> modelData;
+            var errorsList = new List<string>();
+
             foreach (var center in centers)
             {
-                var a = dataService.GetMaxLoadDate(center);
+                var a = center.DataEndDate.ToString();
                 var z = DateTime.Now.ToString();
                 
                 try
                 {
                   
                     dataService.StageTrainingData(center, a.ToString(), z.ToString());
-                    modelData = dataService.GetTrainingData(center, WebConfigurationManager.AppSettings["MLDataStartDate"], z);
+
+                    //record data load stats
+                    var rpt = dataService.GetDataSummary(mlContext, GetPath(center), center);
+                    center.JoinedRecordCount = int.Parse(rpt.JoinedCount.Replace(",", ""));
+                    center.DemandRecordCount = int.Parse(rpt.DemandRecordCount.Replace(",", ""));
+                    center.TemperatureRecordCount = int.Parse(rpt.TemperatureRecordCount.Replace(",", ""));
+                    center.DataStartDate = DateTime.Parse(rpt.DataStartDate);
+                    center.DataEndDate = DateTime.Parse(rpt.DataEndDate);
+                    dataService.UpdateCenterConfig(center);
+
+                    modelData = dataService.GetTrainingDataForCenter(center);
                     IDataView dataView = mlContext.Data.LoadFromEnumerable<EnergyUsage>(modelData);
-                    var mlModel = new PredictionEngine(dataView, mlContext, GetPath(center));
-                    mlModel.FastTree();
+                    List<Obj> trainedModels = new List<Obj>();
+                  
+                        var o = new Obj()
+                        {
+
+                            DataView = dataView,
+                            TypeName = RegressionTrainer.FastTree,
+                            TrainedModel = new PredictionEngine(dataView, mlContext, GetPath(center, RegressionTrainer.FastTree)).FastTree()
+
+
+                        };
+                        trainedModels.Add(o);
+
+                        o = new Obj()
+                        {
+                            DataView = dataView,
+                            TypeName = RegressionTrainer.FastTreeTweedie,
+                            TrainedModel = new PredictionEngine(dataView, mlContext, GetPath(center, RegressionTrainer.FastTreeTweedie)).FastTreeTweedie()
+                        };
+                        trainedModels.Add(o);
+
+                        o = new Obj()
+                        {
+                            DataView = dataView,
+                            TypeName = RegressionTrainer.FastForest,
+                            TrainedModel = ModelExists(GetPath(center, RegressionTrainer.FastForest)) ?
+                                                        mlContext.Model.Load(GetPath(center, RegressionTrainer.FastForest), out DataViewSchema modelSchema2)
+                                                        : new PredictionEngine(dataView, mlContext, GetPath(center, RegressionTrainer.FastForest)).FastForest()
+                        };
+                        trainedModels.Add(o);
+
+                        o = new Obj()
+                        {
+                            DataView = dataView,
+                            TypeName = RegressionTrainer.PoissonRegression,
+                            TrainedModel = new PredictionEngine(dataView, mlContext, GetPath(center, RegressionTrainer.PoissonRegression)).PoissonRegression()
+                        };
+                        trainedModels.Add(o);
+                        o = new Obj()
+                        {
+                            DataView = dataView,
+                            TypeName = RegressionTrainer.OnlineGradientDescent,
+                            TrainedModel = new PredictionEngine(dataView, mlContext, GetPath(center, RegressionTrainer.OnlineGradientDescent)).OnlineGradientDescent()
+                        };
+                        trainedModels.Add(o);
+                        o = new Obj()
+                        {
+                            DataView = dataView,
+                            TypeName = RegressionTrainer.Gam,
+                            TrainedModel =  new PredictionEngine(dataView, mlContext, GetPath(center, RegressionTrainer.Gam)).Gam()
+                        };
+                        trainedModels.Add(o);
+
+                        var rnd = new Random();
+                        var dayOfWeek = rnd.Next(1, 7);
+                        var hour = rnd.Next(0, 23);
+                        var minTemp = (int)modelData.Where(x => x.DayOfWeek == dayOfWeek && x.Hour == hour).Min(x => x.AvgTemp);
+                        var maxtemp = (int)modelData.Where(x => x.DayOfWeek == dayOfWeek && x.Hour == hour).Max(x => x.AvgTemp);
+
+                        MLTestObject testObj = new MLTestObject()
+                        {
+                            CenterAbbr = center.CenterAbbr,
+                            DayOfWeek = dayOfWeek,
+                            Hour = hour,
+                            Temperature = rnd.Next(minTemp, maxtemp)
+                        };
+
+                        foreach (var tm in trainedModels)
+                        {
+                            var usagePrediction = new Prediction(tm.TrainedModel, testObj, center);
+                            var predictions = usagePrediction.PredictSingle();
+                            var eval = new Evaluate(mlContext, GetPath(center, tm.TypeName), center).EvaluateModel(tm.DataView);
+                            predictions.ModelQuality = eval;
+                            predictions.Center = center.CenterAbbr;
+                            predictions.TrainerUsed = tm.TypeName;
+                            predictionsList.Add(predictions);
+                        }
 
                 }
                 catch (Exception ex)
                 {
-                    return BadRequest(ex.InnerException.ToString());
+                    var msg = new StringBuilder();
+                    msg.Append($"{center} - Message: { ex.Message}");
+                    if (ex.InnerException != null)
+                        msg.Append($"Inner Ex: { ex.InnerException.ToString()}");
+                    errorsList.Add(msg.ToString());
+                    continue;
                 }
             }
 
-
+            SelectBestModelForCenters(predictionsList);
             return Ok($"All center machine learning models successfully trained.");
 
         }
@@ -650,7 +743,7 @@ namespace PowerUsageApi.Controllers
             return Path.Combine(WebConfigurationManager.AppSettings["MLModelPath"], "Model_" + center.CenterAbbr.ToUpper() +"_"+ trainer + ".zip");
         }
 
-        private List<Predictions> bestModelForCenters(List<Predictions> list)
+        private List<Predictions> SelectBestModelForCenters(List<Predictions> list)
         {
             var bestModelForCenterList = new List<Predictions>();
            
@@ -681,9 +774,6 @@ namespace PowerUsageApi.Controllers
             return int.Parse(value);
 
         }
-
-
-
      
     }
 
