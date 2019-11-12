@@ -252,10 +252,9 @@ namespace PowerUsageApi.Controllers
         [Route("api/EnergyUsage/IconicsData/SummaryReport")]
         public IHttpActionResult DataSummary()
         {
-            var errorsList = new List<string>();
-            var centers = dataService.GetAllCenters();
-            return Ok(centers);
+            return Ok(dataService.GetAllCenters());
 
+            //var errorsList = new List<string>();
             //var list = new List<MLModelDataSummary>();
             //try
             //{
@@ -278,7 +277,6 @@ namespace PowerUsageApi.Controllers
             //    return Ok(errorsList);
 
             //return Ok(list.OrderBy(x => x.Center).ToList());
-
         }
 
         [SwaggerImplementationNotes("CAUTION: Will wipe and reload ALL Iconics data since the beginning of time. Parameters: None")]
@@ -418,18 +416,7 @@ namespace PowerUsageApi.Controllers
 
             SelectBestModelThenSaveChanges(predictionsList, center);
         }
-
-        private bool IsValidDate(string date)
-        {
-
-            return DateTime.TryParse(date, out DateTime dDate);
-        }
-
-        private static string GetPath(Center center)
-        {
-            return Path.Combine(WebConfigurationManager.AppSettings["MLModelPath"], "Model_" + center.CenterAbbr.ToUpper() +"_"+ center.BestTrainer + ".zip");
-        }
-
+        
         private static string GetPath(Center center, string trainer)
         {
             return Path.Combine(WebConfigurationManager.AppSettings["MLModelPath"], "Model_" + center.CenterAbbr.ToUpper() + "_" + trainer + ".zip");
