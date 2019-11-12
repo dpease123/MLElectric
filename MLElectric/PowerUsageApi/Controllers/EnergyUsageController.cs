@@ -223,9 +223,8 @@ namespace PowerUsageApi.Controllers
             {
                 try
                 {
-                    //var a = center.DataEndDate.ToString();
-                    var a = dataService.GetMaxDataLoadDate(center).ToString();
-                    var z = DateTime.Now.ToString();
+                    var a = GetStartDate(center);
+                    var z = DateTime.Now;
                     dataService.StageTrainingData(center, a, z);
                     LoadTrainEvaluatePredictSave(center);
                 }
@@ -287,7 +286,7 @@ namespace PowerUsageApi.Controllers
         [Route("api/EnergyUsage/IconicsData/WipeReload")]
         public IHttpActionResult LoadAllIconicsData()
         {
-            //return Ok("Please contact IT to have all center data reloaded from Iconics.");
+            return Ok("Please contact IT to have all center data reloaded from Iconics.");
 
             var errorsList = new List<string>();
             var centers = dataService.GetAllCenters();
@@ -302,7 +301,7 @@ namespace PowerUsageApi.Controllers
                     {
                         var a = d.Split(',')[0];
                         var z = d.Split(',')[1];
-                        dataService.StageTrainingData(center, a, z);
+                        dataService.StageTrainingData(center, DateTime.Parse(a), DateTime.Parse(z));
                     }
                     LoadTrainEvaluatePredictSave(center);
                 }
@@ -467,6 +466,15 @@ namespace PowerUsageApi.Controllers
                 return x;
             return int.Parse(value);
 
+        }
+
+        private DateTime GetStartDate(Center center)
+        {
+            if (center.DataStartDate == null)
+                return dataService.GetMaxDataLoadDate(center);
+            else
+                return center.DataStartDate.Value;
+            
         }
 
         #endregion

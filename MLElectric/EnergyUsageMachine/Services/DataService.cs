@@ -40,9 +40,9 @@ namespace EnergyUsageMachine.Services
             return hhr.GetTrainingData(center).ToList();
         }
 
-        public void StageTrainingData(Center center, string startDate, string endDate)
+        public void StageTrainingData(Center center, DateTime startDate, DateTime endDate)
         {
-            hhr.StageTrainingData(center, startDate, endDate);
+            hhr.StageTrainingData(center, startDate.ToString(), endDate.ToString());
         }
 
         public bool DeleteCenterData(string BldgId)
