@@ -188,7 +188,7 @@ namespace EnergyUsageMachine.Data
             return ctx.CenterConfig.ToList();
         }
 
-        public Center UpdateCenter(Center cc)
+        public Center SaveChanges(Center cc)
         {
             var row = ctx.CenterConfig.Find(cc.CenterAbbr);
             row.DateUpdated = DateTime.Now;
@@ -211,6 +211,11 @@ namespace EnergyUsageMachine.Data
                    "DELETE FROM [ML_IconicsData] WHERE [CenterAbbr] = @BldgId",
                     new SqlParameter("@BldgId", BldgId));
             return ret > 0;
+        }
+
+        public DateTime GetMaxDataLoadDate(Center center)
+        {
+            return ctx.IconicsData.Where(x => x.CenterAbbr == center.CenterAbbr).Max(t => t.TimeStamp);
         }
 
         

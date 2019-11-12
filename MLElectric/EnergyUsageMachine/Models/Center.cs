@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace EnergyUsageMachine.Models
 {
-    [Table("ML_CenterConfig")]
+    [Table("ML_Center")]
     public class Center
     {
         [Key]

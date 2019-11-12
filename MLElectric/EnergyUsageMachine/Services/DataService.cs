@@ -20,6 +20,11 @@ namespace EnergyUsageMachine.Services
             return hhr.GetCenterById(Id);
         }
 
+        public DateTime GetMaxDataLoadDate(Center center)
+        {
+            return hhr.GetMaxDataLoadDate(center);
+        }
+
         public List<Center>GetAllCenters()
         {
             return hhr.GetAllCenters();
@@ -46,9 +51,9 @@ namespace EnergyUsageMachine.Services
             return hhr.DeleteCenterData(BldgId);
         }
 
-        public Center UpdateCenter(Center m)
+        public Center SaveChanges(Center c)
         {
-            return hhr.UpdateCenter(m);
+            return hhr.SaveChanges(c);
         }
 
         public MLModelDataSummary GetDataSummary(MLContext ctx, string modelPath, Center center)

@@ -32,7 +32,7 @@ namespace PowerUsageApi.Controllers
         readonly MLContext mlContext = new MLContext();
         readonly DataService dataService = new DataService();
 
-        [SwaggerImplementationNotes("Returns a single energy usage prediction for testing purposes.")]
+        [SwaggerImplementationNotes("Returns a single energy usage prediction using the highest ranking model.")]
         [HttpPost]
         [Route("api/EnergyUsage/Predict/Single")]
         public IHttpActionResult PredictSingle(MLTestObject testObj)
@@ -51,7 +51,7 @@ namespace PowerUsageApi.Controllers
             try
             {
                 var mlContext = new MLContext();
-                if (!File.Exists(GetPath(center)))
+                if (!File.Exists(GetPath(center, center.BestTrainer)))
                     return BadRequest($"No machine learning model found for {center.CenterAbbr}");
 
                 trainedModel = mlContext.Model.Load(GetPath(center, center.BestTrainer), out DataViewSchema modelSchema);
@@ -77,7 +77,7 @@ namespace PowerUsageApi.Controllers
 
         }
 
-        [SwaggerImplementationNotes("Returns the predicted next 24hrs. of energy usage. Parameters: BldgId= BEV,UTC,CCK")]
+        [SwaggerImplementationNotes("Returns the predicted next 24hrs. of energy usage for a center using the highest ranking model. Parameters: BldgId= BEV,UTC,CCK")]
         [HttpGet]
         [Route("api/EnergyUsage/Predict/{BldgId}")]
         public IHttpActionResult EnergyUsage(string BldgId)
@@ -211,7 +211,7 @@ namespace PowerUsageApi.Controllers
 
         }
 
-        [SwaggerImplementationNotes("Refresh machine learning models with the latest Iconics data. Parameters: None")]
+        [SwaggerImplementationNotes("Load and train all machine learning models with the latest Iconics data. Parameters: None")]
         [HttpGet]
         [Route("api/EnergyUsage/Train/NewData/All")]
         public IHttpActionResult TrainAllNow()
@@ -219,14 +219,15 @@ namespace PowerUsageApi.Controllers
             var errorsList = new List<string>();
             var centers = dataService.GetAllCenters();
 
-            foreach (var center in centers)
+            foreach (var center in centers.OrderBy(x=> x.CenterAbbr))
             {
                 try
                 {
-                    var a = center.DataEndDate.ToString();
+                    //var a = center.DataEndDate.ToString();
+                    var a = dataService.GetMaxDataLoadDate(center).ToString();
                     var z = DateTime.Now.ToString();
-                    dataService.StageTrainingData(center, a.ToString(), z.ToString());
-                    TrainModels(center);
+                    dataService.StageTrainingData(center, a, z);
+                    LoadTrainEvaluatePredictSave(center);
                 }
                 catch (Exception ex)
                 {
@@ -283,7 +284,7 @@ namespace PowerUsageApi.Controllers
 
         [SwaggerImplementationNotes("CAUTION: Will wipe and reload ALL Iconics data since the beginning of time. Parameters: None")]
         [HttpGet]
-        [Route("api/EnergyUsage/LoadIconicsData/")]
+        [Route("api/EnergyUsage/IconicsData/WipeReload")]
         public IHttpActionResult LoadAllIconicsData()
         {
             //return Ok("Please contact IT to have all center data reloaded from Iconics.");
@@ -303,7 +304,7 @@ namespace PowerUsageApi.Controllers
                         var z = d.Split(',')[1];
                         dataService.StageTrainingData(center, a, z);
                     }
-                    TrainModels(center);
+                    LoadTrainEvaluatePredictSave(center);
                 }
                 catch (Exception ex)
                 {
@@ -324,19 +325,10 @@ namespace PowerUsageApi.Controllers
 
         #region Private  
 
-        private void TrainModels(Center center)
+        private void LoadTrainEvaluatePredictSave(Center center)
         {
             var predictionsList = new List<Predictions>();
             IEnumerable<EnergyUsage> modelData;
-
-            //record data load stats
-            var rpt = dataService.GetDataSummary(mlContext, GetPath(center), center);
-            center.JoinedRecordCount = int.Parse(rpt.JoinedCount.Replace(",", ""));
-            center.DemandRecordCount = int.Parse(rpt.DemandRecordCount.Replace(",", ""));
-            center.TemperatureRecordCount = int.Parse(rpt.TemperatureRecordCount.Replace(",", ""));
-            center.DataStartDate = DateTime.Parse(rpt.DataStartDate);
-            center.DataEndDate = DateTime.Parse(rpt.DataEndDate);
-            dataService.UpdateCenter(center);
 
             modelData = dataService.GetTrainingDataForCenter(center);
             IDataView dataView = mlContext.Data.LoadFromEnumerable<EnergyUsage>(modelData);
@@ -344,7 +336,6 @@ namespace PowerUsageApi.Controllers
 
             var o = new Obj()
             {
-
                 DataView = dataView,
                 TypeName = RegressionTrainer.FastTree,
                 TrainedModel = new PredictionEngine(dataView, mlContext, GetPath(center, RegressionTrainer.FastTree)).FastTree()
@@ -363,9 +354,7 @@ namespace PowerUsageApi.Controllers
             {
                 DataView = dataView,
                 TypeName = RegressionTrainer.FastForest,
-                TrainedModel = ModelExists(GetPath(center, RegressionTrainer.FastForest)) ?
-                                            mlContext.Model.Load(GetPath(center, RegressionTrainer.FastForest), out DataViewSchema modelSchema2)
-                                            : new PredictionEngine(dataView, mlContext, GetPath(center, RegressionTrainer.FastForest)).FastForest()
+                TrainedModel = new PredictionEngine(dataView, mlContext, GetPath(center, RegressionTrainer.FastForest)).FastForest()
             };
             trainedModels.Add(o);
 
@@ -383,6 +372,7 @@ namespace PowerUsageApi.Controllers
                 TrainedModel = new PredictionEngine(dataView, mlContext, GetPath(center, RegressionTrainer.OnlineGradientDescent)).OnlineGradientDescent()
             };
             trainedModels.Add(o);
+
             o = new Obj()
             {
                 DataView = dataView,
@@ -390,6 +380,14 @@ namespace PowerUsageApi.Controllers
                 TrainedModel = new PredictionEngine(dataView, mlContext, GetPath(center, RegressionTrainer.Gam)).Gam()
             };
             trainedModels.Add(o);
+
+            //o = new Obj()
+            //{
+            //    DataView = dataView,
+            //    TypeName = RegressionTrainer.Sdca,
+            //    TrainedModel = new PredictionEngine(dataView, mlContext, GetPath(center, RegressionTrainer.Sdca)).Sdca()
+            //};
+            //trainedModels.Add(o);
 
             var rnd = new Random();
             var dayOfWeek = rnd.Next(1, 7);
@@ -407,16 +405,19 @@ namespace PowerUsageApi.Controllers
 
             foreach (var tm in trainedModels)
             {
+                //Predict using current model
                 var usagePrediction = new Prediction(tm.TrainedModel, testObj, center);
                 var predictions = usagePrediction.PredictSingle();
-                var eval = new Evaluate(mlContext, GetPath(center, tm.TypeName), center).EvaluateModel(tm.DataView);
-                predictions.ModelQuality = eval;
                 predictions.Center = center.CenterAbbr;
                 predictions.TrainerUsed = tm.TypeName;
                 predictionsList.Add(predictions);
+
+                //Evaluate model
+                var eval = new Evaluate(mlContext, GetPath(center, tm.TypeName), center).EvaluateModel(tm.DataView);
+                predictions.ModelQuality = eval;
             }
 
-            SelectBestModelForCenters(predictionsList);
+            SelectBestModelThenSaveChanges(predictionsList, center);
         }
 
         private bool IsValidDate(string date)
@@ -425,37 +426,38 @@ namespace PowerUsageApi.Controllers
             return DateTime.TryParse(date, out DateTime dDate);
         }
 
-        private static string GetPath(EnergyUsageMachine.Models.Center center)
+        private static string GetPath(Center center)
         {
-            return Path.Combine(WebConfigurationManager.AppSettings["MLModelPath"], "Model_" + center.CenterAbbr.ToUpper() + ".zip");
+            return Path.Combine(WebConfigurationManager.AppSettings["MLModelPath"], "Model_" + center.CenterAbbr.ToUpper() +"_"+ center.BestTrainer + ".zip");
         }
 
-        private static string GetPath(EnergyUsageMachine.Models.Center center, string trainer)
+        private static string GetPath(Center center, string trainer)
         {
-            return Path.Combine(WebConfigurationManager.AppSettings["MLModelPath"], "Model_" + center.CenterAbbr.ToUpper() +"_"+ trainer + ".zip");
+            return Path.Combine(WebConfigurationManager.AppSettings["MLModelPath"], "Model_" + center.CenterAbbr.ToUpper() + "_" + trainer + ".zip");
         }
 
-        private List<Predictions> SelectBestModelForCenters(List<Predictions> list)
+        private void SelectBestModelThenSaveChanges(List<Predictions> list, Center center)
         {
             var bestModelForCenterList = new List<Predictions>();
            
             foreach (var grp in list.GroupBy(x=> x.Center))
             {
-                var center = dataService.GetCenterById(grp.Key);
                 var highestRank = grp.OrderByDescending(c => c.ModelQuality.RSquaredScore).First();
                 bestModelForCenterList.Add(highestRank);
                 center.BestTrainer = highestRank.TrainerUsed;
                 center.ModelGrade = highestRank.ModelQuality.Grade;
                 center.RootMeanSquaredError = decimalparse(highestRank.ModelQuality.RootMeanSquaredError.ToString());
                 center.RSquaredScore = decimalparse(highestRank.ModelQuality.RSquaredScore.ToString());
-                dataService.UpdateCenter(center);
-            }
-            return bestModelForCenterList;
-        }
 
-        private bool ModelExists(string modelPath)
-        {
-            return (File.Exists(modelPath)) ? true : false;
+                //record data load stats
+                var rpt = dataService.GetDataSummary(mlContext, GetPath(center, center.BestTrainer), center);
+                center.JoinedRecordCount = int.Parse(rpt.JoinedCount.Replace(",", ""));
+                center.DemandRecordCount = int.Parse(rpt.DemandRecordCount.Replace(",", ""));
+                center.TemperatureRecordCount = int.Parse(rpt.TemperatureRecordCount.Replace(",", ""));
+                center.DataStartDate = DateTime.Parse(rpt.DataStartDate);
+                center.DataEndDate = DateTime.Parse(rpt.DataEndDate);
+                dataService.SaveChanges(center);
+            }
         }
 
         private decimal decimalparse(string value)
