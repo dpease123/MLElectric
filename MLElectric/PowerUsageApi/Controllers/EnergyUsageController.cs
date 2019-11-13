@@ -100,6 +100,8 @@ namespace PowerUsageApi.Controllers
                 trainedModel = mlContext.Model.Load(GetPath(center, center.BestTrainer), out DataViewSchema modelSchema);
 
                 var weatherForeCast = Task.Run(async () => await ws.Get24HrForecast(center)).Result;
+                if (!weatherForeCast.Periods.Any())
+                    return BadRequest($"No weather data found for {center.CenterAbbr}");
 
                 var usagePredictions = new Prediction(trainedModel, weatherForeCast, center);
 
