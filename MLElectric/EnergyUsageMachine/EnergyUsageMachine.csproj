@@ -114,7 +114,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BestModel.cs" />
     <Compile Include="ConfigurationManager.cs" />
     <Compile Include="Data\CenterkWh_History.cs" />
     <Compile Include="Data\CenterTemp_History.cs" />
@@ -141,6 +140,7 @@
     <Compile Include="ViewModels\MLModelDataSummary.cs" />
     <Compile Include="ViewModels\MLTestObject.cs" />
     <Compile Include="ViewModels\PredictionResult.cs" />
+    <Compile Include="ViewModels\vm_Center.cs" />
     <Compile Include="XMLHandler.cs" />
   </ItemGroup>
   <ItemGroup>

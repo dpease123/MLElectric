@@ -15,6 +15,7 @@ using System.Text;
 using EnergyUsageMachine.Enums;
 using EnergyUsageMachine.Models;
 
+
 namespace PowerUsageApi.Controllers
 {
     public class EnergyUsageController : ApiController
@@ -254,7 +255,30 @@ namespace PowerUsageApi.Controllers
         [Route("api/EnergyUsage/IconicsData/SummaryReport")]
         public IHttpActionResult DataSummary()
         {
-            return Ok(dataService.GetAllCenters());
+            var list = new List<vm_Center>();
+            var data = dataService.GetAllCenters();
+            foreach (var d in data)
+            {
+                var c = new vm_Center()
+                {
+                    BestTrainer = d.BestTrainer,
+                    CenterAbbr = d.CenterAbbr,
+                    CenterName = d.CenterName,
+                    DataEndDate = d.DataEndDate.Value.ToString(),
+                    DataStartDate = d.DataStartDate.Value.ToString(),
+                    DateUpdated = d.DateUpdated.Value.ToString(),
+                    DemandRecordCount = d.DemandRecordCount,
+                    JoinedRecordCount = d.JoinedRecordCount,
+                    ModelGrade = d.ModelGrade,
+                    Region = d.Region,
+                    RootMeanSquaredError = d.RootMeanSquaredError,
+                    RSquaredScore = d.RSquaredScore,
+                    TemperatureRecordCount = d.TemperatureRecordCount,
+                    WeatherURL = d.WeatherURL
+                };
+                list.Add(c);
+            }
+            return Ok(list);
 
             //var errorsList = new List<string>();
             //var list = new List<MLModelDataSummary>();
