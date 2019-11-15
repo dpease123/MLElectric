@@ -250,10 +250,10 @@ namespace PowerUsageApi.Controllers
 
         }
 
-        [SwaggerImplementationNotes("Returns center settings and related data metrics.")]
+        [SwaggerImplementationNotes("Returns center settings and related Iconics data load metrics.")]
         [HttpGet]
-        [Route("api/EnergyUsage/IconicsData/SummaryReport")]
-        public IHttpActionResult DataSummary()
+        [Route("api/EnergyUsage/IconicsData/Metrics")]
+        public IHttpActionResult Metrics()
         {
             var list = new List<vm_Center>();
             var data = dataService.GetAllCenters();
@@ -264,16 +264,17 @@ namespace PowerUsageApi.Controllers
                     BestTrainer = d.BestTrainer,
                     CenterAbbr = d.CenterAbbr,
                     CenterName = d.CenterName,
-                    DataEndDate = d.DataEndDate.Value.ToString(),
-                    DataStartDate = d.DataStartDate.Value.ToString(),
-                    DateUpdated = d.DateUpdated.Value.ToString(),
-                    DemandRecordCount = d.DemandRecordCount,
-                    JoinedRecordCount = d.JoinedRecordCount,
+                    DataEndDate = d.DataEndDate.HasValue ? d.DataEndDate.Value.ToString() : null,
+                    DataStartDate = d.DataStartDate.HasValue ? d.DataStartDate.Value.ToString() : null,
+                    DataUpdatedDate = d.DateUpdated.HasValue ? d.DateUpdated.Value.ToString() : null,
+                    DemandRecordCount = d.DemandRecordCount.HasValue ? d.DemandRecordCount.Value.ToString("#,##0") : null,
+                    JoinedRecordCount = d.JoinedRecordCount.HasValue ? d.JoinedRecordCount.Value.ToString("#,##0") : null,
+                    TemperatureRecordCount = d.TemperatureRecordCount.HasValue ? d.TemperatureRecordCount.Value.ToString("#,##0") : null,
+                    //MatchQuality = GetMatchPercent(d),
                     ModelGrade = d.ModelGrade,
                     Region = d.Region,
                     RootMeanSquaredError = d.RootMeanSquaredError,
                     RSquaredScore = d.RSquaredScore,
-                    TemperatureRecordCount = d.TemperatureRecordCount,
                     WeatherURL = d.WeatherURL
                 };
                 list.Add(c);
@@ -488,6 +489,21 @@ namespace PowerUsageApi.Controllers
             else
                 return center.DataStartDate.Value;
             
+        }
+
+        private string GetMatchPercent(Center d)
+        {
+            var drc = d.DemandRecordCount;
+            var jrc = d.JoinedRecordCount;
+            var trc = d.TemperatureRecordCount;
+
+            if (drc.HasValue && jrc.HasValue && trc.HasValue)
+            {
+
+                var calc = decimal.Parse(jrc.ToString()) / (decimal.Parse(drc.ToString() + decimal.Parse(trc.ToString())));
+                return calc.ToString("P1");
+            }
+            return "null";
         }
 
         #endregion

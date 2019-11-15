@@ -14,11 +14,14 @@ namespace EnergyUsageMachine.ViewModels
         public string WeatherURL { get; set; }
         public string DataStartDate { get; set; }
         public string DataEndDate { get; set; }
-        public int? TemperatureRecordCount { get; set; }
+        public string DataUpdatedDate { get; set; }
+        public string TemperatureRecordCount { get; set; }
 
-        public int? DemandRecordCount { get; set; }
+        public string DemandRecordCount { get; set; }
 
-        public int? JoinedRecordCount { get; set; }
+        public string JoinedRecordCount { get; set; }
+
+        //public string MatchQuality { get; set; }
 
         public decimal? RSquaredScore { get; set; }
 
@@ -26,7 +29,7 @@ namespace EnergyUsageMachine.ViewModels
 
         public string ModelGrade { get; set; }
 
-        public string DateUpdated { get; set; }
+       
         public string BestTrainer { get; set; }
 
        
